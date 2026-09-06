@@ -5,6 +5,9 @@ const {
 const {
     sendFacebookMessage
 } = require("../services/facebookMessenger");
+const {
+    generateAIReply
+} = require("../services/aiMessaging");
 
 const express = require("express");
 
@@ -113,20 +116,34 @@ router.post("/", (req, res) => {
                 const reply =
                     `Thanks for contacting ${business.name}! We received your message.`;
 
+                generateAIReply({
+                    business,
+                    platform: "facebook",
+                    customerId: senderId,
+                    text
+                })
+                    .then(reply => {
 
-                sendFacebookMessage(
-                    senderId,
-                    reply
-                ).catch(error => {
+                        console.log(
+                            "🤖 AI Reply:",
+                            reply
+                        );
 
-                    console.error(
-                        "❌ Facebook reply failed:",
-                        error.response?.data ||
-                        error.message
-                    );
+                        return sendFacebookMessage(
+                            senderId,
+                            reply
+                        );
 
-                });
-                console.log("=================================\n");
+                    })
+                    .catch(error => {
+
+                        console.error(
+                            "❌ AI messaging failed:",
+                            error.response?.data ||
+                            error.message
+                        );
+
+                    });
 
 
                 // Next:
