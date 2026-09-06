@@ -61,7 +61,9 @@ Your responsibilities:
 
     const response =
         await openai.chat.completions.create({
-            model: "gpt-5.6-mini",
+            model:
+                process.env.OPENAI_MESSAGING_MODEL ||
+                "gpt-5.6-terra",
             messages: [
                 {
                     role: "system",
