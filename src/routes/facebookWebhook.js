@@ -1,4 +1,11 @@
 const {
+    resolveFacebookBusiness
+} = require("../services/businessService");
+
+const {
+    sendFacebookMessage
+} = require("../services/facebookMessenger");
+const {
     sendFacebookMessage
 } = require(
     "../services/facebookMessenger"
@@ -94,10 +101,27 @@ router.post("/", (req, res) => {
                 console.log("Sender ID:", senderId);
                 console.log("Message ID:", messageId);
                 console.log("Text:", text);
+                const business =
+                    resolveFacebookBusiness(pageId);
+
+                if (!business) {
+
+                    console.error(
+                        `❌ Cannot process message — unknown Page: ${pageId}`
+                    );
+
+                    continue;
+                }
+
+
+                const reply =
+                    `Thanks for contacting ${business.name}! We received your message.`;
+
+
                 sendFacebookMessage(
                     senderId,
-                    "Thanks for contacting us! We received your message."
-                ).catch((error) => {
+                    reply
+                ).catch(error => {
 
                     console.error(
                         "❌ Facebook reply failed:",
