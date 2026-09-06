@@ -5,11 +5,7 @@ const {
 const {
     sendFacebookMessage
 } = require("../services/facebookMessenger");
-const {
-    sendFacebookMessage
-} = require(
-    "../services/facebookMessenger"
-);
+
 const express = require("express");
 
 const router = express.Router();
