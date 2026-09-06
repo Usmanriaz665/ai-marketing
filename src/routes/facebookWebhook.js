@@ -1,3 +1,8 @@
+const {
+    sendFacebookMessage
+} = require(
+    "../services/facebookMessenger"
+);
 const express = require("express");
 
 const router = express.Router();
@@ -89,7 +94,18 @@ router.post("/", (req, res) => {
                 console.log("Sender ID:", senderId);
                 console.log("Message ID:", messageId);
                 console.log("Text:", text);
+                sendFacebookMessage(
+                    senderId,
+                    "Thanks for contacting us! We received your message."
+                ).catch((error) => {
 
+                    console.error(
+                        "❌ Facebook reply failed:",
+                        error.response?.data ||
+                        error.message
+                    );
+
+                });
                 console.log("=================================\n");
 
 
