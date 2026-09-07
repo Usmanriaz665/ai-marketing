@@ -120,7 +120,8 @@ router.post("/", (req, res) => {
                     business,
                     platform: "facebook",
                     customerId: senderId,
-                    text
+                    text,
+                    messageId
                 })
                     .then(reply => {
 
