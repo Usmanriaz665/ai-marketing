@@ -17,14 +17,24 @@ async function generateAIReply({
     messageId = null
 }) {
 
-    await addMessage(
-        business.id,
-        platform,
-        customerId,
-        "user",
-        text,
-        messageId
-    );
+    const messageResult =
+        await addMessage(
+            business.id,
+            platform,
+            customerId,
+            "user",
+            text,
+            messageId
+        );
+
+    if (messageResult?.duplicate) {
+
+        console.log(
+            `🔁 Skipping AI reply for duplicate message: ${messageId}`
+        );
+
+        return null;
+    }
 
 
     const history =

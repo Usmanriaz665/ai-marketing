@@ -231,6 +231,25 @@ async function getOrCreateConversation(
 }
 
 
+async function messageExists(platformMessageId) {
+
+    if (!platformMessageId) {
+        return false;
+    }
+
+    const row =
+        await get(
+            `
+            SELECT id
+            FROM messages
+            WHERE platform_message_id = ?
+            LIMIT 1
+            `,
+            [platformMessageId]
+        );
+
+    return !!row;
+}
 // ========================================
 // SAVE MESSAGE
 // ========================================
@@ -243,6 +262,21 @@ async function addMessage(
     content,
     platformMessageId = null
 ) {
+
+    if (
+        role === "user" &&
+        platformMessageId &&
+        await messageExists(platformMessageId)
+    ) {
+        console.log(
+            `🔁 Duplicate message ignored: ${platformMessageId}`
+        );
+
+        return {
+            duplicate: true
+        };
+    }
+
 
     const {
         conversation
@@ -283,7 +317,10 @@ async function addMessage(
     );
 
 
-    return conversation;
+    return {
+        duplicate: false,
+        conversation
+    };
 }
 
 
@@ -344,5 +381,6 @@ module.exports = {
     getOrCreateCustomer,
     getOrCreateConversation,
     getConversation,
-    addMessage
+    addMessage,
+    messageExists
 };

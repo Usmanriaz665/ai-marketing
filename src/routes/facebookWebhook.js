@@ -125,6 +125,10 @@ router.post("/", (req, res) => {
                 })
                     .then(reply => {
 
+                        if (!reply) {
+                            return;
+                        }
+
                         console.log(
                             "🤖 AI Reply:",
                             reply
@@ -134,7 +138,6 @@ router.post("/", (req, res) => {
                             senderId,
                             reply
                         );
-
                     })
                     .catch(error => {
 

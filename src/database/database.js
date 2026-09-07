@@ -118,7 +118,12 @@ db.serialize(() => {
                 REFERENCES conversations(id)
         )
     `);
-
+    db.run(`
+    CREATE UNIQUE INDEX IF NOT EXISTS
+    idx_messages_platform_message_id
+    ON messages(platform_message_id)
+    WHERE platform_message_id IS NOT NULL
+`);
 
     // ========================================
     // LEADS
