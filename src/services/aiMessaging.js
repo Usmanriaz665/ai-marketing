@@ -1,3 +1,9 @@
+const OpenAI = require("openai");
+
+const {
+    getConversation,
+    addMessage
+} = require("./conversationService");
 async function generateAIReply({
     business,
     platform,
