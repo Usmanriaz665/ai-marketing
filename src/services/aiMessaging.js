@@ -83,3 +83,6 @@ Your responsibilities:
 
     return reply;
 }
+module.exports = {
+    generateAIReply
+};
