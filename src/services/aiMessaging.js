@@ -4,6 +4,11 @@ const {
     getConversation,
     addMessage
 } = require("./conversationService");
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+});
+
 async function generateAIReply({
     business,
     platform,
