@@ -1,16 +1,20 @@
 const businesses = [
     {
         id: "cellulaire-care",
-        name: "Cellulaire Care",
+
+        name:
+            "Cellulaire Care",
 
         connections: {
             facebook: {
-                pageId: process.env.FACEBOOK_PAGE_ID
+                pageId:
+                    process.env.FACEBOOK_PAGE_ID
             }
         },
 
         profile: {
-            industry: "cellphone_repair",
+            industry:
+                "cellphone_repair",
 
             description:
                 "Cellphone repair and related services.",
@@ -20,8 +24,13 @@ const businesses = [
                 "en"
             ],
 
-            defaultLanguage: "fr"
-        }
+            defaultLanguage:
+                "fr"
+        },
+
+        capabilities: [
+            "lookup_service_info"
+        ]
     }
 ];
 
