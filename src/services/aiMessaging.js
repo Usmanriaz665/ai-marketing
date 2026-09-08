@@ -59,7 +59,14 @@ async function generateAIReply({
             platform,
             customerId
         );
-
+console.log(
+    "🧠 Conversation history:",
+    JSON.stringify(
+        history,
+        null,
+        2
+    )
+);
 
     // ========================================
     // SYSTEM PROMPT
