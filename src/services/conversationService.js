@@ -377,10 +377,109 @@ async function getConversation(
 }
 
 
+// ========================================
+// COMPLETE CONVERSATION
+// ========================================
+
+async function completeConversation(
+    businessId,
+    platform,
+    platformCustomerId
+) {
+
+    const customer =
+        await get(
+            `
+            SELECT id
+            FROM customers
+            WHERE business_id = ?
+              AND platform = ?
+              AND platform_customer_id = ?
+            LIMIT 1
+            `,
+            [
+                businessId,
+                platform,
+                platformCustomerId
+            ]
+        );
+
+
+    if (!customer) {
+
+        console.warn(
+            "⚠️ Cannot complete conversation: customer not found"
+        );
+
+        return {
+            success: false,
+            reason: "customer_not_found"
+        };
+    }
+
+
+    const conversation =
+        await get(
+            `
+            SELECT id
+            FROM conversations
+            WHERE business_id = ?
+              AND customer_id = ?
+              AND platform = ?
+              AND status = 'active'
+            ORDER BY id DESC
+            LIMIT 1
+            `,
+            [
+                businessId,
+                customer.id,
+                platform
+            ]
+        );
+
+
+    if (!conversation) {
+
+        console.warn(
+            "⚠️ No active conversation to complete"
+        );
+
+        return {
+            success: false,
+            reason: "conversation_not_found"
+        };
+    }
+
+
+    await run(
+        `
+        UPDATE conversations
+        SET
+            status = 'completed',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        `,
+        [
+            conversation.id
+        ]
+    );
+
+
+    console.log(
+        `✅ Conversation completed: ${conversation.id}`
+    );
+
+
+    return {
+        success: true,
+        conversationId: conversation.id
+    };
+}
 module.exports = {
     getOrCreateCustomer,
     getOrCreateConversation,
     getConversation,
     addMessage,
-    messageExists
+    messageExists,
+    completeConversation
 };

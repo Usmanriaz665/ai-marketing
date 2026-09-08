@@ -6,7 +6,8 @@ const {
 
 const {
     getConversation,
-    addMessage
+    addMessage,
+    completeConversation
 } = require("./conversationService");
 
 const {
@@ -314,7 +315,8 @@ MESSAGING STYLE:
 
     const MAX_TOOL_ROUNDS = 5;
 
-    let assistantMessage = null;
+let assistantMessage = null;
+let shouldCompleteConversation = false;
 
 
     for (
@@ -452,25 +454,40 @@ MESSAGING STYLE:
             // GENERIC LEAD TOOL
             // ========================================
 
-            if (
-                toolName === "save_lead"
-            ) {
+if (
+    toolName === "save_lead"
+) {
 
-                console.log(
-                    "🎯 Executing lead capture:",
-                    args
-                );
+    console.log(
+        "🎯 Executing lead capture:",
+        args
+    );
 
 
-                result =
-                    await saveLeadTool({
-                        business,
-                        platform,
-                        customerId,
-                        args
-                    });
+    result =
+        await saveLeadTool({
+            business,
+            platform,
+            customerId,
+            args
+        });
 
-            }
+
+    // Mark the current conversation for
+    // completion only if the lead was
+    // successfully saved.
+    if (
+        result?.success === true
+    ) {
+
+        shouldCompleteConversation = true;
+
+        console.log(
+            "🎯 Lead saved successfully. Conversation will be completed after the final AI reply."
+        );
+    }
+
+}
 
 
             // ========================================
@@ -558,17 +575,50 @@ MESSAGING STYLE:
     // ========================================
     // SAVE AI MESSAGE
     // ========================================
+await addMessage(
+    business.id,
+    platform,
+    customerId,
+    "assistant",
+    reply
+);
 
-    await addMessage(
-        business.id,
-        platform,
-        customerId,
-        "assistant",
-        reply
-    );
+
+// ========================================
+// COMPLETE CONVERSATION AFTER LEAD
+// ========================================
+
+if (
+    shouldCompleteConversation
+) {
+
+    const completionResult =
+        await completeConversation(
+            business.id,
+            platform,
+            customerId
+        );
 
 
-    return reply;
+    if (
+        completionResult?.success
+    ) {
+
+        console.log(
+            `🏁 Conversation ${completionResult.conversationId} completed after lead capture`
+        );
+    }
+    else {
+
+        console.warn(
+            "⚠️ Conversation could not be completed:",
+            completionResult
+        );
+    }
+}
+
+
+return reply;
 }
 
 
