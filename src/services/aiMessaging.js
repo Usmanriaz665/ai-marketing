@@ -80,7 +80,40 @@ async function generateAIReply({
         )
     );
 
+    // ========================================
+    // BUSINESS AI CONFIGURATION
+    // ========================================
 
+    const aiConfig =
+        business.ai || {};
+
+
+    const leadConfig =
+        aiConfig.leadCapture || {};
+
+
+    const leadCaptureEnabled =
+        leadConfig.enabled === true;
+
+
+    const requiredLeadFields =
+        Array.isArray(
+            leadConfig.requiredFields
+        )
+            ? leadConfig.requiredFields
+            : [];
+
+
+    const metadataFields =
+        Array.isArray(
+            leadConfig.metadataFields
+        )
+            ? leadConfig.metadataFields
+            : [];
+
+
+    const askOneAtATime =
+        leadConfig.askOneAtATime === true;
     // ========================================
     // SYSTEM PROMPT
     // ========================================
@@ -137,44 +170,64 @@ CONVERSATION CONTEXT:
 - If the context is genuinely ambiguous, ask a short clarification question.
 
 LEAD CAPTURE:
+LEAD CAPTURE:
 
-Your goal is to help genuine customers move toward completing
-their purchase, booking, visit, or service request.
+Lead capture enabled:
+${leadCaptureEnabled}
 
-When a customer shows clear intent to proceed, such as:
-- "I want to do it"
-- "Can I come today?"
-- "I want to come today"
-- "I want to book"
-- "Where can I bring it?"
-- "Can someone contact me?"
-- or similar buying intent
+Required customer fields:
+${requiredLeadFields.length
+    ? requiredLeadFields.join(", ")
+    : "None"}
 
-begin collecting the information needed for a lead.
+Ask one field at a time:
+${askOneAtATime ? "Yes" : "No"}
 
-Ask for missing information naturally, one question at a time.
+Business lead instructions:
+${leadConfig.instructions ||
+"Follow the business configuration when capturing leads."}
 
-For this business, normally collect the customer's name and
-phone number when appropriate.
+Useful lead metadata:
+${metadataFields.length
+    ? metadataFields.join(", ")
+    : "None"}
 
-Do not repeatedly ask for information the customer already provided.
+If lead capture is enabled:
 
-Once sufficient contact information has been provided, call
-save_lead.
+- Recognize genuine buying or booking intent naturally.
+- Examples include wanting to proceed, visit, book, buy, receive service, or be contacted.
+- Collect only the required customer fields configured above.
+- Never invent customer information.
+- Do not ask for information already provided in the current conversation.
 
-Use metadata to preserve useful business-specific information
-already learned during the conversation.
+${askOneAtATime
+    ? `IMPORTANT:
+Ask for only ONE missing customer field per message.
+Never ask for multiple missing customer fields in the same message.
+Collect the required fields naturally in the order listed above.`
+    : `You may request multiple missing fields when appropriate.`}
 
-For a cellphone repair lead, metadata can contain fields such as:
-device, service, quoted_price, duration, warranty, and intent.
+Once all required customer information has been collected,
+call save_lead.
 
-Never invent customer information.
+When calling save_lead:
 
-After save_lead succeeds, confirm naturally that the customer's
-information has been received.
+- Include a concise summary of what the customer wants.
+- Preserve relevant known information using metadata.
+- Prefer the configured metadata fields listed above.
+- Never invent metadata values.
+- Only include information actually learned from the conversation or business tools.
 
-Do not tell the customer about databases, functions, tools,
-metadata, or internal systems.
+After save_lead succeeds:
+
+- Confirm naturally that the customer's information was received.
+- Do not mention databases, functions, tools, metadata,
+  internal systems, or implementation details.
+
+If lead capture is disabled:
+
+- Do not attempt to save a lead.
+- Continue helping the customer normally.
 
 MESSAGING STYLE:
 
@@ -241,59 +294,78 @@ MESSAGING STYLE:
     // ========================================
     // GENERIC LEAD TOOL
     // ========================================
+    // ========================================
+    // GENERIC LEAD TOOL
+    // ========================================
 
-    tools.push({
-        type: "function",
+    if (
+        leadCaptureEnabled
+    ) {
 
-        function: {
-            name: "save_lead",
+        tools.push({
+            type: "function",
 
-            description:
-                "Save a qualified sales lead after the customer shows clear interest in buying, booking, visiting, or proceeding and sufficient contact information has been collected.",
+            function: {
+                name: "save_lead",
 
-            parameters: {
-                type: "object",
+                description:
+                    `Save a qualified lead after the customer shows clear intent to proceed and the required customer information has been collected. Required fields: ${
+                        requiredLeadFields.length
+                            ? requiredLeadFields.join(", ")
+                            : "none"
+                    }.`,
 
-                properties: {
+                parameters: {
+                    type: "object",
 
-                    name: {
-                        type: "string",
-                        description:
-                            "Customer name if provided."
+                    properties: {
+
+                        name: {
+                            type: "string",
+                            description:
+                                "Customer name if provided."
+                        },
+
+                        phone: {
+                            type: "string",
+                            description:
+                                "Customer phone number if provided."
+                        },
+
+                        email: {
+                            type: "string",
+                            description:
+                                "Customer email address if provided."
+                        },
+
+                        summary: {
+                            type: "string",
+                            description:
+                                "Short factual summary of what the customer wants."
+                        },
+
+                        metadata: {
+                            type: "object",
+
+                            description:
+                                `Relevant business-specific information about the lead. Preferred fields: ${
+                                    metadataFields.length
+                                        ? metadataFields.join(", ")
+                                        : "none"
+                                }.`,
+
+                            additionalProperties:
+                                true
+                        }
                     },
 
-                    phone: {
-                        type: "string",
-                        description:
-                            "Customer phone number if provided."
-                    },
-
-                    email: {
-                        type: "string",
-                        description:
-                            "Customer email address if provided."
-                    },
-
-                    summary: {
-                        type: "string",
-                        description:
-                            "Short summary of what the customer wants."
-                    },
-
-                    metadata: {
-                        type: "object",
-                        description:
-                            "Business-specific structured information about the lead.",
-                        additionalProperties: true
-                    }
-                },
-
-                required: [
-                    "summary"
-                ]
+                    required: [
+                        "summary"
+                    ]
+                }
             }
-        }
-    });
+        });
+    }
 
 
     // ========================================
@@ -454,40 +526,82 @@ let shouldCompleteConversation = false;
             // GENERIC LEAD TOOL
             // ========================================
 
-if (
-    toolName === "save_lead"
-) {
+            if (
+                toolName === "save_lead"
+            ) {
 
-    console.log(
-        "🎯 Executing lead capture:",
-        args
-    );
-
-
-    result =
-        await saveLeadTool({
-            business,
-            platform,
-            customerId,
-            args
-        });
+                console.log(
+                    "🎯 Executing lead capture:",
+                    args
+                );
 
 
-    // Mark the current conversation for
-    // completion only if the lead was
-    // successfully saved.
-    if (
-        result?.success === true
-    ) {
+                // ========================================
+                // VALIDATE REQUIRED LEAD FIELDS
+                // ========================================
 
-        shouldCompleteConversation = true;
+                const missingFields =
+                    requiredLeadFields.filter(
+                        field => {
 
-        console.log(
-            "🎯 Lead saved successfully. Conversation will be completed after the final AI reply."
-        );
-    }
+                            const value =
+                                args[field];
 
-}
+                            return (
+                                value === undefined ||
+                                value === null ||
+                                String(value).trim() === ""
+                            );
+                        }
+                    );
+
+
+                if (
+                    missingFields.length > 0
+                ) {
+
+                    console.warn(
+                        "⚠️ Lead missing required fields:",
+                        missingFields
+                    );
+
+
+                    result = {
+                        success: false,
+
+                        reason:
+                            "missing_required_fields",
+
+                        missingFields
+                    };
+
+                }
+                else {
+
+                    result =
+                        await saveLeadTool({
+                            business,
+                            platform,
+                            customerId,
+                            args
+                        });
+
+
+                    if (
+                        result?.success === true
+                    ) {
+
+                        shouldCompleteConversation =
+                            true;
+
+
+                        console.log(
+                            "🎯 Lead saved successfully. Conversation will be completed after the final AI reply."
+                        );
+                    }
+                }
+
+            }
 
 
             // ========================================
