@@ -1,4 +1,7 @@
 const OpenAI = require("openai");
+const {
+    saveLeadTool
+} = require("../tools/leadTools");
 
 const {
     getConversation,
@@ -107,6 +110,51 @@ and offer assistance from a team member.
 - If a tool returns candidates, use those candidates to help clarify the model.
 
 - Never invent a device match.
+- Facebook Messenger does not support Markdown formatting.
+- Never use Markdown, asterisks, headings, tables, or other formatting syntax.
+- Write clean plain-text messages suitable for Messenger.
+- Keep replies short, friendly, and conversational.
+LEAD CAPTURE:
+
+Your goal is to help genuine customers move toward completing
+their purchase, booking, visit, or service request.
+
+When a customer shows clear intent to proceed, such as:
+- "I want to do it"
+- "Can I come today?"
+- "I want to book"
+- "Where can I bring it?"
+- "Can someone contact me?"
+- similar buying intent
+
+begin collecting the information needed for a lead.
+
+Ask for missing information naturally, one question at a time.
+
+For this business, normally collect the customer's name and
+phone number when appropriate.
+
+Do not repeatedly ask for information the customer already provided.
+
+Once sufficient contact information has been provided, call
+save_lead.
+
+Use metadata to preserve useful business-specific information
+already learned during the conversation.
+
+For a cellphone repair lead, metadata can contain fields such as:
+device, service, quoted_price, and intent.
+
+Never invent customer information.
+
+After save_lead succeeds, confirm naturally that the customer's
+information has been received.
+
+Do not tell the customer about databases, functions, tools,
+metadata, or internal systems.
+
+Facebook Messenger does not support Markdown formatting.
+Do not use Markdown or asterisks.
 `;
 
 
@@ -151,6 +199,58 @@ and offer assistance from a team member.
                     },
 
                     required: []
+                }
+            }
+        });
+        tools.push({
+            type: "function",
+
+            function: {
+                name: "save_lead",
+
+                description:
+                    "Save a qualified sales lead after the customer shows clear interest in buying, booking, visiting, or proceeding and sufficient contact information has been collected.",
+
+                parameters: {
+                    type: "object",
+
+                    properties: {
+
+                        name: {
+                            type: "string",
+                            description:
+                                "Customer name if provided."
+                        },
+
+                        phone: {
+                            type: "string",
+                            description:
+                                "Customer phone number if provided."
+                        },
+
+                        email: {
+                            type: "string",
+                            description:
+                                "Customer email address if provided."
+                        },
+
+                        summary: {
+                            type: "string",
+                            description:
+                                "Short summary of what the customer wants."
+                        },
+
+                        metadata: {
+                            type: "object",
+                            description:
+                                "Business-specific structured information about the lead.",
+                            additionalProperties: true
+                        }
+                    },
+
+                    required: [
+                        "summary"
+                    ]
                 }
             }
         });
@@ -257,16 +357,44 @@ and offer assistance from a team member.
             );
 
 
-            const result =
-                await executeBusinessTool({
-                    businessId:
-                        business.id,
+            let result;
 
-                    toolName,
 
-                    arguments:
+            if (toolName === "save_lead") {
+
+                console.log(
+                    "🎯 Executing lead capture:",
+                    args
+                );
+
+                result =
+                    await saveLeadTool({
+                        business,
+                        platform,
+                        customerId,
                         args
-                });
+                    });
+
+            }
+            else {
+
+                result =
+                    await executeBusinessTool({
+                        businessId:
+                            business.id,
+
+                        toolName,
+
+                        arguments:
+                            args
+                    });
+            }
+
+
+            console.log(
+                "🔧 Tool result:",
+                result
+            );
 
 
             console.log(

@@ -155,6 +155,20 @@ db.serialize(() => {
     console.log(
         "✅ Marketing database tables ready"
     );
+    db.run(`
+    ALTER TABLE leads
+    ADD COLUMN metadata TEXT
+`, error => {
+        if (
+            error &&
+            !error.message.includes("duplicate column name")
+        ) {
+            console.error(
+                "❌ Failed adding lead metadata:",
+                error.message
+            );
+        }
+    });
 
 });
 
