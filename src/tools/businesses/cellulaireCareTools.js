@@ -15,46 +15,134 @@ function normalizeText(value = "") {
 }
 
 
+function normalizeCompact(value = "") {
+    return normalizeText(value)
+        .replace(/\s+/g, "");
+}
+
+
 // ========================================
-// FIND DEVICE
+// DETECT WHETHER OBJECT LOOKS LIKE
+// A DEVICE REPAIR RECORD
 // ========================================
 
-function findDevice(device = "") {
+function looksLikeRepairRecord(value) {
 
-    const input =
-        normalizeText(device)
-            .replace(/\s+/g, "");
+    if (
+        !value ||
+        typeof value !== "object" ||
+        Array.isArray(value)
+    ) {
+        return false;
+    }
 
-    if (!input) {
+    const knownRepairKeys = [
+        "screen",
+        "back_glass",
+        "ear_speaker",
+        "battery",
+        "charging_port",
+        "rear_camera",
+        "front_camera",
+        "camera_lens",
+        "loud_speaker",
+        "mic",
+        "volume_keys_power_button",
+        "data_recovery_backup",
+        "water_general_diagnosis"
+    ];
+
+    return knownRepairKeys.some(
+        key =>
+            Object.prototype.hasOwnProperty.call(
+                value,
+                key
+            )
+    );
+}
+
+
+// ========================================
+// RECURSIVELY FIND DEVICE
+// ========================================
+
+function findDeviceRecursive(
+    node,
+    requestedDevice,
+    path = []
+) {
+
+    if (
+        !node ||
+        typeof node !== "object"
+    ) {
         return null;
     }
 
-    const deviceNames =
-        Object.keys(repairs);
+    const requested =
+        normalizeCompact(requestedDevice);
 
-    for (const deviceName of deviceNames) {
 
-        const normalizedDevice =
-            normalizeText(deviceName)
-                .replace(/\s+/g, "");
+    for (
+        const [key, value]
+        of Object.entries(node)
+    ) {
 
-        if (normalizedDevice === input) {
-            return deviceName;
+        const normalizedKey =
+            normalizeCompact(key);
+
+
+        if (
+            normalizedKey === requested &&
+            looksLikeRepairRecord(value)
+        ) {
+
+            return {
+                deviceName: key,
+                repairs: value,
+                path: [
+                    ...path,
+                    key
+                ]
+            };
+        }
+
+
+        if (
+            value &&
+            typeof value === "object"
+        ) {
+
+            const found =
+                findDeviceRecursive(
+                    value,
+                    requestedDevice,
+                    [
+                        ...path,
+                        key
+                    ]
+                );
+
+            if (found) {
+                return found;
+            }
         }
     }
+
 
     return null;
 }
 
 
 // ========================================
-// FIND SERVICE
+// SERVICE MATCHING
 // ========================================
 
 function findService(service = "") {
 
     const input =
         normalizeText(service);
+
 
     const aliases = {
 
@@ -134,8 +222,7 @@ function findService(service = "") {
             "volume buttons",
             "power button",
             "power key",
-            "side button",
-            "volume keys power button"
+            "side button"
         ],
 
         data_recovery_backup: [
@@ -162,21 +249,23 @@ function findService(service = "") {
     ) {
 
         if (
-            names.some(name =>
-                input === name ||
-                input.includes(name)
+            names.some(
+                name =>
+                    input === name ||
+                    input.includes(name)
             )
         ) {
             return serviceKey;
         }
     }
 
+
     return null;
 }
 
 
 // ========================================
-// LOOKUP SERVICE INFORMATION
+// LOOKUP SERVICE
 // ========================================
 
 async function lookupServiceInfo(args = {}) {
@@ -196,15 +285,18 @@ async function lookupServiceInfo(args = {}) {
     );
 
 
-    // ----------------------------------------
-    // Find device
-    // ----------------------------------------
+    // ========================================
+    // FIND DEVICE ANYWHERE IN JSON
+    // ========================================
 
-    const deviceName =
-        findDevice(device);
+    const deviceResult =
+        findDeviceRecursive(
+            repairs,
+            device
+        );
 
 
-    if (!deviceName) {
+    if (!deviceResult) {
 
         console.log(
             "❌ Device not found:",
@@ -215,16 +307,26 @@ async function lookupServiceInfo(args = {}) {
             success: true,
             found: false,
             reason: "device_not_found",
-            requestedDevice: device || null,
-            message:
-                "The requested device was not found in the repair catalog."
+            requestedDevice:
+                device || null
         };
     }
 
 
-    // ----------------------------------------
-    // Find service
-    // ----------------------------------------
+    console.log(
+        "✅ Device found:",
+        deviceResult.deviceName
+    );
+
+    console.log(
+        "📂 Catalog path:",
+        deviceResult.path.join(" > ")
+    );
+
+
+    // ========================================
+    // FIND SERVICE
+    // ========================================
 
     const serviceKey =
         findService(service);
@@ -240,65 +342,54 @@ async function lookupServiceInfo(args = {}) {
         return {
             success: true,
             found: false,
-            reason: "service_not_recognized",
-            device: deviceName,
-            requestedService: service || null,
-            message:
-                "The requested repair service could not be identified."
+            reason:
+                "service_not_recognized",
+
+            device:
+                deviceResult.deviceName,
+
+            requestedService:
+                service || null
         };
     }
 
-
-    // ----------------------------------------
-    // Get device repairs
-    // ----------------------------------------
-
-    const deviceRepairs =
-        repairs[deviceName];
-
-
-    if (!deviceRepairs) {
-
-        return {
-            success: true,
-            found: false,
-            reason: "device_data_unavailable",
-            device: deviceName
-        };
-    }
-
-
-    // ----------------------------------------
-    // Get specific repair
-    // ----------------------------------------
 
     const repair =
-        deviceRepairs[serviceKey];
+        deviceResult.repairs[
+            serviceKey
+        ];
 
+
+    // ========================================
+    // NO DATA
+    // ========================================
 
     if (!repair) {
 
         console.log(
             "❌ Repair data unavailable:",
-            deviceName,
+            deviceResult.deviceName,
             serviceKey
         );
 
         return {
             success: true,
             found: false,
-            reason: "repair_data_unavailable",
-            device: deviceName,
-            service: serviceKey,
-            message:
-                "Repair information is not currently available for this device and service."
+            reason:
+                "repair_data_unavailable",
+
+            device:
+                deviceResult.deviceName,
+
+            service:
+                serviceKey
         };
     }
 
 
-    // ----------------------------------------
-    // Successful result
-    // ----------------------------------------
+    // ========================================
+    // SUCCESS
+    // ========================================
 
     const result = {
 
@@ -306,7 +397,7 @@ async function lookupServiceInfo(args = {}) {
         found: true,
 
         device:
-            deviceName,
+            deviceResult.deviceName,
 
         service:
             serviceKey,
