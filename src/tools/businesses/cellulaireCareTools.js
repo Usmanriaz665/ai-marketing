@@ -66,21 +66,23 @@ function looksLikeRepairRecord(value) {
 // RECURSIVELY FIND DEVICE
 // ========================================
 
-function findDeviceRecursive(
+// ========================================
+// COLLECT ALL DEVICES FROM CATALOG
+// ========================================
+
+function collectDevices(
     node,
-    requestedDevice,
-    path = []
+    path = [],
+    results = []
 ) {
 
     if (
         !node ||
-        typeof node !== "object"
+        typeof node !== "object" ||
+        Array.isArray(node)
     ) {
-        return null;
+        return results;
     }
-
-    const requested =
-        normalizeCompact(requestedDevice);
 
 
     for (
@@ -88,23 +90,18 @@ function findDeviceRecursive(
         of Object.entries(node)
     ) {
 
-        const normalizedKey =
-            normalizeCompact(key);
+        if (looksLikeRepairRecord(value)) {
 
-
-        if (
-            normalizedKey === requested &&
-            looksLikeRepairRecord(value)
-        ) {
-
-            return {
+            results.push({
                 deviceName: key,
                 repairs: value,
                 path: [
                     ...path,
                     key
                 ]
-            };
+            });
+
+            continue;
         }
 
 
@@ -113,20 +110,281 @@ function findDeviceRecursive(
             typeof value === "object"
         ) {
 
-            const found =
-                findDeviceRecursive(
-                    value,
-                    requestedDevice,
-                    [
-                        ...path,
-                        key
-                    ]
+            collectDevices(
+                value,
+                [
+                    ...path,
+                    key
+                ],
+                results
+            );
+        }
+    }
+
+
+    return results;
+}
+
+
+// Build once when server starts
+const catalogDevices =
+    collectDevices(repairs);
+
+console.log(
+    `📱 Loaded ${catalogDevices.length} repair devices`
+);
+
+
+// ========================================
+// CREATE DEVICE ALIASES
+// ========================================
+
+function getDeviceAliases(deviceName) {
+
+    const normalized =
+        normalizeText(deviceName);
+
+    const compact =
+        normalized.replace(/\s+/g, "");
+
+    const aliases =
+        new Set([
+            normalized,
+            compact
+        ]);
+
+
+    // ----------------------------------------
+    // iPhone aliases
+    // ----------------------------------------
+
+    if (normalized.startsWith("iphone ")) {
+
+        const model =
+            normalized.replace(
+                /^iphone\s+/,
+                ""
+            );
+
+        const compactModel =
+            model.replace(/\s+/g, "");
+
+
+        aliases.add(model);
+        aliases.add(compactModel);
+
+        aliases.add(
+            `iphone${compactModel}`
+        );
+
+
+        // 13 Pro Max -> 13pm
+        if (
+            model.endsWith(" pro max")
+        ) {
+
+            const number =
+                model.replace(
+                    /\s+pro\s+max$/,
+                    ""
                 );
 
-            if (found) {
-                return found;
-            }
+            aliases.add(
+                `${number}pm`
+            );
+
+            aliases.add(
+                `${number}promax`
+            );
+
+            aliases.add(
+                `iphone${number}pm`
+            );
         }
+
+
+        // 13 Pro -> 13p
+        if (
+            model.endsWith(" pro") &&
+            !model.endsWith(" pro max")
+        ) {
+
+            const number =
+                model.replace(
+                    /\s+pro$/,
+                    ""
+                );
+
+            aliases.add(
+                `${number}p`
+            );
+
+            aliases.add(
+                `${number}pro`
+            );
+
+            aliases.add(
+                `iphone${number}p`
+            );
+        }
+
+
+        // 13 Plus -> 13+
+        if (
+            model.endsWith(" plus")
+        ) {
+
+            const number =
+                model.replace(
+                    /\s+plus$/,
+                    ""
+                );
+
+            aliases.add(
+                `${number}+`
+            );
+
+            aliases.add(
+                `${number}plus`
+            );
+
+            aliases.add(
+                `iphone${number}+`
+            );
+        }
+    }
+
+
+    return Array.from(aliases);
+}
+
+
+// ========================================
+// FIND DEVICE
+// ========================================
+
+function findDevice(device = "") {
+
+    const input =
+        normalizeText(device);
+
+    const compactInput =
+        input.replace(/\s+/g, "");
+
+
+    if (!compactInput) {
+        return null;
+    }
+
+
+    // ========================================
+    // 1. EXACT MATCH
+    // ========================================
+
+    for (const item of catalogDevices) {
+
+        const aliases =
+            getDeviceAliases(
+                item.deviceName
+            );
+
+
+        const exactMatch =
+            aliases.some(alias => {
+
+                const compactAlias =
+                    normalizeText(alias)
+                        .replace(/\s+/g, "");
+
+                return (
+                    compactAlias ===
+                    compactInput
+                );
+            });
+
+
+        if (exactMatch) {
+
+            return {
+                ...item,
+                matchType: "exact"
+            };
+        }
+    }
+
+
+    // ========================================
+    // 2. UNIQUE PARTIAL MATCH
+    // ========================================
+
+    const matches = [];
+
+
+    for (const item of catalogDevices) {
+
+        const aliases =
+            getDeviceAliases(
+                item.deviceName
+            );
+
+
+        const matched =
+            aliases.some(alias => {
+
+                const compactAlias =
+                    normalizeText(alias)
+                        .replace(/\s+/g, "");
+
+                // Avoid dangerously short matching
+                if (
+                    compactAlias.length < 3 ||
+                    compactInput.length < 3
+                ) {
+                    return false;
+                }
+
+                return (
+                    compactAlias.includes(
+                        compactInput
+                    ) ||
+                    compactInput.includes(
+                        compactAlias
+                    )
+                );
+            });
+
+
+        if (matched) {
+            matches.push(item);
+        }
+    }
+
+
+    // Only accept partial match when
+    // exactly one catalog device matches.
+    if (matches.length === 1) {
+
+        return {
+            ...matches[0],
+            matchType: "partial"
+        };
+    }
+
+
+    // Multiple possible devices = don't guess
+    if (matches.length > 1) {
+
+        return {
+            ambiguous: true,
+
+            candidates:
+                matches
+                    .slice(0, 5)
+                    .map(
+                        item =>
+                            item.deviceName
+                    )
+        };
     }
 
 
@@ -290,10 +548,7 @@ async function lookupServiceInfo(args = {}) {
     // ========================================
 
     const deviceResult =
-        findDeviceRecursive(
-            repairs,
-            device
-        );
+        findDevice(device);
 
 
     if (!deviceResult) {
@@ -313,9 +568,30 @@ async function lookupServiceInfo(args = {}) {
     }
 
 
+    if (deviceResult.ambiguous) {
+
+        console.log(
+            "⚠️ Ambiguous device:",
+            device,
+            deviceResult.candidates
+        );
+
+        return {
+            success: true,
+            found: false,
+            reason: "ambiguous_device",
+            requestedDevice:
+                device || null,
+            candidates:
+                deviceResult.candidates,
+            message:
+                "More than one device matches. Ask the customer which exact model they have."
+        };
+    }
+
+
     console.log(
-        "✅ Device found:",
-        deviceResult.deviceName
+        `✅ Device found: ${deviceResult.deviceName} (${deviceResult.matchType})`
     );
 
     console.log(
@@ -356,7 +632,7 @@ async function lookupServiceInfo(args = {}) {
 
     const repair =
         deviceResult.repairs[
-            serviceKey
+        serviceKey
         ];
 
 
