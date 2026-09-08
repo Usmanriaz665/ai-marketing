@@ -1,6 +1,4 @@
-const {
-    db
-} = require("../database/database");
+const db = require("../database/database");
 
 
 // ========================================
