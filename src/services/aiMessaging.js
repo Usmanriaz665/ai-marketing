@@ -1,4 +1,5 @@
 const OpenAI = require("openai");
+
 const {
     saveLeadTool
 } = require("../tools/leadTools");
@@ -12,10 +13,15 @@ const {
     executeBusinessTool
 } = require("./toolService");
 
+
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
 });
 
+
+// ========================================
+// GENERATE AI REPLY
+// ========================================
 
 async function generateAIReply({
     business,
@@ -39,6 +45,9 @@ async function generateAIReply({
             messageId
         );
 
+
+    // Prevent duplicate Facebook webhook
+    // deliveries from generating duplicate replies.
     if (messageResult?.duplicate) {
 
         console.log(
@@ -59,6 +68,8 @@ async function generateAIReply({
             platform,
             customerId
         );
+
+
     console.log(
         "🧠 Conversation history:",
         JSON.stringify(
@@ -67,6 +78,7 @@ async function generateAIReply({
             2
         )
     );
+
 
     // ========================================
     // SYSTEM PROMPT
@@ -94,33 +106,35 @@ Your responsibilities:
 - When the customer asks about a service, price, repair, product, or business-specific information, use the available business tools.
 - If the available business tools do not contain the required information, explain that a team member can assist.
 - Do not mention OpenAI.
+
+BUSINESS TOOL RULES:
+
 - When a business tool returns found=true, use the exact information returned by the tool.
-
 - Never change, estimate, round, or invent a price.
-
 - If duration is provided, tell the customer the duration when relevant.
-
 - If warranty is provided, tell the customer the warranty when relevant.
-
 - If free=true, clearly tell the customer the service is free.
+- If found=false, never guess the price or service information.
+- If information is unavailable, explain that a team member can assist.
 
--If found=false, never guess the price or service information.
-- Tell the customer that the information is currently unavailable
-and offer assistance from a team member.
+DEVICE MATCHING:
+
 - Customers may use abbreviations or incomplete device names.
-
 - Use business tools to resolve device and service information.
-
 - If a tool returns reason="ambiguous_device", do not choose a device yourself.
 - Ask the customer a short follow-up question to identify the exact model.
-
 - If a tool returns candidates, use those candidates to help clarify the model.
-
 - Never invent a device match.
-- Facebook Messenger does not support Markdown formatting.
-- Never use Markdown, asterisks, headings, tables, or other formatting syntax.
-- Write clean plain-text messages suitable for Messenger.
-- Keep replies short, friendly, and conversational.
+
+CONVERSATION CONTEXT:
+
+- Use information the customer already provided earlier in the conversation.
+- Do not ask again for information that is already clearly known.
+- Pay particular attention to the most recent messages when determining what device, service, product, or request the customer is referring to.
+- If the customer says "it", "this", "that", "come today", "do it", or similar phrases, use recent conversation context to understand what they mean.
+- If the recent context clearly identifies the device and service, do not ask for them again.
+- If the context is genuinely ambiguous, ask a short clarification question.
+
 LEAD CAPTURE:
 
 Your goal is to help genuine customers move toward completing
@@ -129,10 +143,11 @@ their purchase, booking, visit, or service request.
 When a customer shows clear intent to proceed, such as:
 - "I want to do it"
 - "Can I come today?"
+- "I want to come today"
 - "I want to book"
 - "Where can I bring it?"
 - "Can someone contact me?"
-- similar buying intent
+- or similar buying intent
 
 begin collecting the information needed for a lead.
 
@@ -150,7 +165,7 @@ Use metadata to preserve useful business-specific information
 already learned during the conversation.
 
 For a cellphone repair lead, metadata can contain fields such as:
-device, service, quoted_price, and intent.
+device, service, quoted_price, duration, warranty, and intent.
 
 Never invent customer information.
 
@@ -160,8 +175,14 @@ information has been received.
 Do not tell the customer about databases, functions, tools,
 metadata, or internal systems.
 
-Facebook Messenger does not support Markdown formatting.
-Do not use Markdown or asterisks.
+MESSAGING STYLE:
+
+- Facebook Messenger does not support Markdown formatting.
+- Never use Markdown.
+- Never use asterisks for bold text.
+- Do not use headings or tables in customer replies.
+- Write clean plain-text messages suitable for Messenger.
+- Keep replies short, friendly, natural, and conversational.
 `;
 
 
@@ -273,11 +294,10 @@ Do not use Markdown or asterisks.
         }
     });
 
-    // ========================================
-    // AI + MULTI-ROUND TOOL LOOP
-    // ========================================
 
-    const MAX_TOOL_ROUNDS = 5;
+    // ========================================
+    // BUILD AI MESSAGE HISTORY
+    // ========================================
 
     const messages = [
         {
@@ -287,6 +307,12 @@ Do not use Markdown or asterisks.
         ...history
     ];
 
+
+    // ========================================
+    // MULTI-ROUND AI TOOL LOOP
+    // ========================================
+
+    const MAX_TOOL_ROUNDS = 5;
 
     let assistantMessage = null;
 
@@ -301,6 +327,10 @@ Do not use Markdown or asterisks.
             `🤖 AI round ${round}`
         );
 
+
+        // ========================================
+        // CALL OPENAI
+        // ========================================
 
         const response =
             await openai.chat.completions.create({
@@ -324,13 +354,19 @@ Do not use Markdown or asterisks.
 
 
         // ========================================
-        // FINAL TEXT RESPONSE
+        // CHECK FOR TOOL CALLS
         // ========================================
 
         const hasToolCalls =
-            assistantMessage.tool_calls &&
+            Array.isArray(
+                assistantMessage.tool_calls
+            ) &&
             assistantMessage.tool_calls.length > 0;
 
+
+        // ========================================
+        // NO TOOLS = FINAL RESPONSE
+        // ========================================
 
         if (!hasToolCalls) {
 
@@ -342,21 +378,22 @@ Do not use Markdown or asterisks.
         }
 
 
-        // ========================================
-        // TOOL CALLS
-        // ========================================
-
         console.log(
             `🔧 AI requested ${assistantMessage.tool_calls.length} tool call(s)`
         );
 
 
-        // Assistant tool-call message must
-        // be added before tool results.
+        // IMPORTANT:
+        // Add assistant tool-call message
+        // before returning tool results.
         messages.push(
             assistantMessage
         );
 
+
+        // ========================================
+        // EXECUTE ALL REQUESTED TOOLS
+        // ========================================
 
         for (
             const toolCall
@@ -373,6 +410,10 @@ Do not use Markdown or asterisks.
             const toolName =
                 toolCall.function.name;
 
+
+            // ========================================
+            // PARSE TOOL ARGUMENTS
+            // ========================================
 
             let args = {};
 
@@ -448,7 +489,6 @@ Do not use Markdown or asterisks.
                         arguments:
                             args
                     });
-
             }
 
 
@@ -475,7 +515,7 @@ Do not use Markdown or asterisks.
 
 
         // ========================================
-        // SAFETY: LAST ALLOWED ROUND
+        // MAXIMUM TOOL ROUND PROTECTION
         // ========================================
 
         if (
@@ -494,47 +534,47 @@ Do not use Markdown or asterisks.
         }
     }
 
-    assistantMessage =
-        response.choices[0].message;
-}
+
+    // ========================================
+    // FINAL TEXT RESPONSE
+    // ========================================
+
+    const reply =
+        assistantMessage?.content?.trim();
 
 
-// ========================================
-// FINAL TEXT RESPONSE
-// ========================================
+    if (!reply) {
 
-const reply =
-    assistantMessage.content?.trim();
+        console.error(
+            "❌ AI returned no final text response"
+        );
+
+        return (
+            "A team member can assist you with that request."
+        );
+    }
 
 
-if (!reply) {
+    // ========================================
+    // SAVE AI MESSAGE
+    // ========================================
 
-    console.error(
-        "❌ AI returned no final text response"
+    await addMessage(
+        business.id,
+        platform,
+        customerId,
+        "assistant",
+        reply
     );
 
-    return (
-        "A team member can assist you with that request."
-    );
+
+    return reply;
 }
 
 
 // ========================================
-// SAVE AI MESSAGE
+// EXPORT
 // ========================================
-
-await addMessage(
-    business.id,
-    platform,
-    customerId,
-    "assistant",
-    reply
-);
-
-
-return reply;
-}
-
 
 module.exports = {
     generateAIReply
