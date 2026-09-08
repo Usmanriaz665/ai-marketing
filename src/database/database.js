@@ -124,6 +124,37 @@ db.serialize(() => {
     ON messages(platform_message_id)
     WHERE platform_message_id IS NOT NULL
 `);
+    db.run(`
+    CREATE TABLE IF NOT EXISTS handoffs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        business_id TEXT NOT NULL,
+
+        customer_id INTEGER NOT NULL,
+
+        conversation_id INTEGER NOT NULL,
+
+        platform TEXT NOT NULL,
+
+        reason TEXT,
+
+        summary TEXT,
+
+        priority TEXT DEFAULT 'normal',
+
+        status TEXT DEFAULT 'pending',
+
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY(customer_id)
+            REFERENCES customers(id),
+
+        FOREIGN KEY(conversation_id)
+            REFERENCES conversations(id)
+    )
+`);
 
     // ========================================
     // LEADS

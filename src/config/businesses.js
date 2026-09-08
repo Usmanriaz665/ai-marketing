@@ -6,14 +6,12 @@ const businesses = [
 
         connections: {
             facebook: {
-                pageId:
-                    process.env.FACEBOOK_PAGE_ID
+                pageId: process.env.FACEBOOK_PAGE_ID
             }
         },
 
         profile: {
-            industry:
-                "cellphone_repair",
+            industry: "cellphone_repair",
 
             description:
                 "Cellphone repair and related services.",
@@ -23,25 +21,16 @@ const businesses = [
                 "en"
             ],
 
-            defaultLanguage:
-                "fr"
+            defaultLanguage: "fr"
         },
 
-
-        // ========================================
-        // AI CONFIGURATION
-        // ========================================
-
         ai: {
-
             tone:
                 "friendly, professional and conversational",
 
-            replyLength:
-                "short",
+            replyLength: "short",
 
             leadCapture: {
-
                 enabled: true,
 
                 requiredFields: [
@@ -62,13 +51,15 @@ const businesses = [
                     "warranty",
                     "intent"
                 ]
+            },
+
+            humanHandoff: {
+                enabled: true,
+
+                instructions:
+                    "Use human handoff when the customer explicitly asks to speak with a person, has a serious complaint, or the request requires assistance that the AI cannot reliably provide."
             }
         },
-
-
-        // ========================================
-        // BUSINESS CAPABILITIES
-        // ========================================
 
         capabilities: [
             "lookup_service_info"
@@ -77,20 +68,40 @@ const businesses = [
 ];
 
 
-function getBusinessByFacebookPageId(
-    pageId
-) {
+function getBusinessByFacebookPageId(pageId) {
 
-    return businesses.find(
-        business =>
-            business.connections
-                ?.facebook
-                ?.pageId === pageId
+    if (!pageId) {
+        return null;
+    }
+
+    return (
+        businesses.find(
+            business =>
+                business.connections
+                    ?.facebook
+                    ?.pageId === pageId
+        ) || null
+    );
+}
+
+
+function getBusinessById(businessId) {
+
+    if (!businessId) {
+        return null;
+    }
+
+    return (
+        businesses.find(
+            business =>
+                business.id === businessId
+        ) || null
     );
 }
 
 
 module.exports = {
     businesses,
-    getBusinessByFacebookPageId
+    getBusinessByFacebookPageId,
+    getBusinessById
 };
