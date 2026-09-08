@@ -154,6 +154,8 @@ Your responsibilities:
                 process.env.OPENAI_MESSAGING_MODEL ||
                 "gpt-5.6-terra",
 
+            reasoning_effort: "none",
+
             messages,
 
             tools,
@@ -273,6 +275,8 @@ Your responsibilities:
                 model:
                     process.env.OPENAI_MESSAGING_MODEL ||
                     "gpt-5.6-terra",
+
+                reasoning_effort: "none",
 
                 messages,
 
