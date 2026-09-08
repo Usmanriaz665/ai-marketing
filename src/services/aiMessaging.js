@@ -165,6 +165,10 @@ Do not use Markdown or asterisks.
     const tools = [];
 
 
+    // ========================================
+    // BUSINESS-SPECIFIC TOOL
+    // ========================================
+
     if (
         business.capabilities?.includes(
             "lookup_service_info"
@@ -202,59 +206,65 @@ Do not use Markdown or asterisks.
                 }
             }
         });
-        tools.push({
-            type: "function",
+    }
 
-            function: {
-                name: "save_lead",
 
-                description:
-                    "Save a qualified sales lead after the customer shows clear interest in buying, booking, visiting, or proceeding and sufficient contact information has been collected.",
+    // ========================================
+    // GENERIC LEAD TOOL
+    // ========================================
 
-                parameters: {
-                    type: "object",
+    tools.push({
+        type: "function",
 
-                    properties: {
+        function: {
+            name: "save_lead",
 
-                        name: {
-                            type: "string",
-                            description:
-                                "Customer name if provided."
-                        },
+            description:
+                "Save a qualified sales lead after the customer shows clear interest in buying, booking, visiting, or proceeding and sufficient contact information has been collected.",
 
-                        phone: {
-                            type: "string",
-                            description:
-                                "Customer phone number if provided."
-                        },
+            parameters: {
+                type: "object",
 
-                        email: {
-                            type: "string",
-                            description:
-                                "Customer email address if provided."
-                        },
+                properties: {
 
-                        summary: {
-                            type: "string",
-                            description:
-                                "Short summary of what the customer wants."
-                        },
-
-                        metadata: {
-                            type: "object",
-                            description:
-                                "Business-specific structured information about the lead.",
-                            additionalProperties: true
-                        }
+                    name: {
+                        type: "string",
+                        description:
+                            "Customer name if provided."
                     },
 
-                    required: [
-                        "summary"
-                    ]
-                }
+                    phone: {
+                        type: "string",
+                        description:
+                            "Customer phone number if provided."
+                    },
+
+                    email: {
+                        type: "string",
+                        description:
+                            "Customer email address if provided."
+                    },
+
+                    summary: {
+                        type: "string",
+                        description:
+                            "Short summary of what the customer wants."
+                    },
+
+                    metadata: {
+                        type: "object",
+                        description:
+                            "Business-specific structured information about the lead.",
+                        additionalProperties: true
+                    }
+                },
+
+                required: [
+                    "summary"
+                ]
             }
-        });
-    }
+        }
+    });
 
 
     // ========================================
@@ -389,13 +399,6 @@ Do not use Markdown or asterisks.
                             args
                     });
             }
-
-
-            console.log(
-                "🔧 Tool result:",
-                result
-            );
-
 
             console.log(
                 "🔧 Tool result:",
