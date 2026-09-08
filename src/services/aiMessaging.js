@@ -59,14 +59,14 @@ async function generateAIReply({
             platform,
             customerId
         );
-console.log(
-    "🧠 Conversation history:",
-    JSON.stringify(
-        history,
-        null,
-        2
-    )
-);
+    console.log(
+        "🧠 Conversation history:",
+        JSON.stringify(
+            history,
+            null,
+            2
+        )
+    );
 
     // ========================================
     // SYSTEM PROMPT
@@ -273,10 +273,11 @@ Do not use Markdown or asterisks.
         }
     });
 
+    // ========================================
+    // AI + MULTI-ROUND TOOL LOOP
+    // ========================================
 
-    // ========================================
-    // FIRST AI CALL
-    // ========================================
+    const MAX_TOOL_ROUNDS = 5;
 
     const messages = [
         {
@@ -287,45 +288,74 @@ Do not use Markdown or asterisks.
     ];
 
 
-    let response =
-        await openai.chat.completions.create({
-
-            model:
-                process.env.OPENAI_MESSAGING_MODEL ||
-                "gpt-5.6-terra",
-
-            reasoning_effort: "none",
-
-            messages,
-
-            tools,
-
-            tool_choice: "auto"
-        });
+    let assistantMessage = null;
 
 
-    let assistantMessage =
-        response.choices[0].message;
-
-
-    // ========================================
-    // TOOL CALLS
-    // ========================================
-
-    if (
-        assistantMessage.tool_calls &&
-        assistantMessage.tool_calls.length > 0
+    for (
+        let round = 1;
+        round <= MAX_TOOL_ROUNDS;
+        round++
     ) {
+
+        console.log(
+            `🤖 AI round ${round}`
+        );
+
+
+        const response =
+            await openai.chat.completions.create({
+
+                model:
+                    process.env.OPENAI_MESSAGING_MODEL ||
+                    "gpt-5.6-terra",
+
+                reasoning_effort: "none",
+
+                messages,
+
+                tools,
+
+                tool_choice: "auto"
+            });
+
+
+        assistantMessage =
+            response.choices[0].message;
+
+
+        // ========================================
+        // FINAL TEXT RESPONSE
+        // ========================================
+
+        const hasToolCalls =
+            assistantMessage.tool_calls &&
+            assistantMessage.tool_calls.length > 0;
+
+
+        if (!hasToolCalls) {
+
+            console.log(
+                "✅ AI returned final response"
+            );
+
+            break;
+        }
+
+
+        // ========================================
+        // TOOL CALLS
+        // ========================================
 
         console.log(
             `🔧 AI requested ${assistantMessage.tool_calls.length} tool call(s)`
         );
 
 
-        // Important:
-        // the assistant tool-call message must be
-        // included before tool results.
-        messages.push(assistantMessage);
+        // Assistant tool-call message must
+        // be added before tool results.
+        messages.push(
+            assistantMessage
+        );
 
 
         for (
@@ -368,7 +398,7 @@ Do not use Markdown or asterisks.
 
 
             console.log(
-                "🔧 Executing business tool:",
+                "🔧 Executing tool:",
                 toolName,
                 args
             );
@@ -377,12 +407,19 @@ Do not use Markdown or asterisks.
             let result;
 
 
-            if (toolName === "save_lead") {
+            // ========================================
+            // GENERIC LEAD TOOL
+            // ========================================
+
+            if (
+                toolName === "save_lead"
+            ) {
 
                 console.log(
                     "🎯 Executing lead capture:",
                     args
                 );
+
 
                 result =
                     await saveLeadTool({
@@ -393,6 +430,12 @@ Do not use Markdown or asterisks.
                     });
 
             }
+
+
+            // ========================================
+            // BUSINESS-SPECIFIC TOOLS
+            // ========================================
+
             else {
 
                 result =
@@ -405,13 +448,19 @@ Do not use Markdown or asterisks.
                         arguments:
                             args
                     });
+
             }
+
 
             console.log(
                 "🔧 Tool result:",
                 result
             );
 
+
+            // ========================================
+            // RETURN TOOL RESULT TO AI
+            // ========================================
 
             messages.push({
                 role: "tool",
@@ -426,66 +475,64 @@ Do not use Markdown or asterisks.
 
 
         // ========================================
-        // SECOND AI CALL
-        // AI reads tool results and replies
+        // SAFETY: LAST ALLOWED ROUND
         // ========================================
 
-        response =
-            await openai.chat.completions.create({
+        if (
+            round === MAX_TOOL_ROUNDS
+        ) {
 
-                model:
-                    process.env.OPENAI_MESSAGING_MODEL ||
-                    "gpt-5.6-terra",
+            console.error(
+                "❌ Maximum AI tool rounds reached"
+            );
 
-                reasoning_effort: "none",
-
-                messages,
-
-                tools,
-
-                tool_choice: "auto"
-            });
-
-
-        assistantMessage =
-            response.choices[0].message;
+            assistantMessage = {
+                role: "assistant",
+                content:
+                    "A team member can assist you with that request."
+            };
+        }
     }
 
-
-    // ========================================
-    // FINAL TEXT RESPONSE
-    // ========================================
-
-    const reply =
-        assistantMessage.content?.trim();
+    assistantMessage =
+        response.choices[0].message;
+}
 
 
-    if (!reply) {
+// ========================================
+// FINAL TEXT RESPONSE
+// ========================================
 
-        console.error(
-            "❌ AI returned no final text response"
-        );
-
-        return (
-            "A team member can assist you with that request."
-        );
-    }
+const reply =
+    assistantMessage.content?.trim();
 
 
-    // ========================================
-    // SAVE AI MESSAGE
-    // ========================================
+if (!reply) {
 
-    await addMessage(
-        business.id,
-        platform,
-        customerId,
-        "assistant",
-        reply
+    console.error(
+        "❌ AI returned no final text response"
     );
 
+    return (
+        "A team member can assist you with that request."
+    );
+}
 
-    return reply;
+
+// ========================================
+// SAVE AI MESSAGE
+// ========================================
+
+await addMessage(
+    business.id,
+    platform,
+    customerId,
+    "assistant",
+    reply
+);
+
+
+return reply;
 }
 
 
