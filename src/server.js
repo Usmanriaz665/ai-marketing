@@ -3,7 +3,8 @@ console.log(
     "OPENAI_API_KEY:",
     process.env.OPENAI_API_KEY ? "LOADED" : "MISSING"
 );
-
+const path =
+    require("path");
 const express = require("express");
 
 const facebookWebhook =
@@ -17,7 +18,15 @@ const PORT =
     process.env.PORT || 3000;
 
 app.use(express.json());
-
+app.use(
+    "/dashboard",
+    express.static(
+        path.join(
+            __dirname,
+            "../public/dashboard"
+        )
+    )
+);
 app.use(
     "/api/handoffs",
     handoffRoutes

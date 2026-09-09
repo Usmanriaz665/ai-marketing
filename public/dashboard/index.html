@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>AI Marketing Inbox</title>
+
+    <link
+        rel="stylesheet"
+        href="/dashboard/style.css"
+    >
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- SIDEBAR -->
+
+        <aside class="sidebar">
+
+            <div class="brand">
+                <h1>AI Marketing</h1>
+                <p>Human Inbox</p>
+            </div>
+
+            <div class="sidebar-header">
+
+                <span>
+                    Conversations
+                </span>
+
+                <button
+                    id="refreshButton"
+                    class="refresh-button"
+                >
+                    Refresh
+                </button>
+
+            </div>
+
+            <div
+                id="handoffList"
+                class="handoff-list"
+            >
+
+                <div class="empty-state">
+                    Loading conversations...
+                </div>
+
+            </div>
+
+        </aside>
+
+
+        <!-- CONVERSATION -->
+
+        <main class="conversation">
+
+            <div
+                id="emptyConversation"
+                class="conversation-empty"
+            >
+
+                <h2>Human Inbox</h2>
+
+                <p>
+                    Select a conversation from the left.
+                </p>
+
+            </div>
+
+
+            <div
+                id="conversationPanel"
+                class="conversation-panel hidden"
+            >
+
+                <!-- HEADER -->
+
+                <header class="conversation-header">
+
+                    <div>
+
+                        <h2 id="customerName">
+                            Customer
+                        </h2>
+
+                        <div
+                            id="conversationMeta"
+                            class="conversation-meta"
+                        ></div>
+
+                    </div>
+
+
+                    <div class="header-actions">
+
+                        <span
+                            id="statusBadge"
+                            class="status-badge"
+                        ></span>
+
+                        <button
+                            id="takeButton"
+                            class="button secondary"
+                        >
+                            Take
+                        </button>
+
+                        <button
+                            id="resolveButton"
+                            class="button danger"
+                        >
+                            Resolve
+                        </button>
+
+                    </div>
+
+                </header>
+
+
+                <!-- HANDOFF SUMMARY -->
+
+                <div
+                    id="handoffSummary"
+                    class="handoff-summary"
+                ></div>
+
+
+                <!-- MESSAGES -->
+
+                <div
+                    id="messages"
+                    class="messages"
+                ></div>
+
+
+                <!-- REPLY -->
+
+                <div class="reply-area">
+
+                    <textarea
+                        id="replyInput"
+                        placeholder="Type your reply..."
+                        rows="2"
+                    ></textarea>
+
+                    <button
+                        id="sendButton"
+                        class="button primary"
+                    >
+                        Send
+                    </button>
+
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+
+    <script src="/dashboard/app.js"></script>
+
+</body>
+
+</html>
