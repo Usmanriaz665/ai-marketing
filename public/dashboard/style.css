@@ -2,9 +2,13 @@
     box-sizing: border-box;
 }
 
+html,
 body {
     margin: 0;
+    height: 100%;
+}
 
+body {
     font-family:
         Inter,
         -apple-system,
@@ -12,7 +16,7 @@ body {
         "Segoe UI",
         sans-serif;
 
-    background: #f5f7fb;
+    background: #f6f7fb;
     color: #1f2937;
 }
 
@@ -21,21 +25,188 @@ textarea {
     font: inherit;
 }
 
-.app {
-    display: grid;
+button {
+    cursor: pointer;
+}
 
-    grid-template-columns:
-        340px 1fr;
-
-    height: 100vh;
+.hidden {
+    display: none !important;
 }
 
 
-/* ========================================
-   SIDEBAR
-======================================== */
+/* =========================================
+   DASHBOARD
+========================================= */
 
-.sidebar {
+.dashboard {
+    height: 100vh;
+
+    display: grid;
+
+    grid-template-columns:
+        220px 1fr;
+}
+
+
+/* =========================================
+   MAIN NAVIGATION
+========================================= */
+
+.main-nav {
+    background: #111827;
+    color: white;
+
+    display: flex;
+    flex-direction: column;
+
+    min-height: 0;
+}
+
+.logo {
+    min-height: 78px;
+
+    padding: 18px;
+
+    display: flex;
+    align-items: center;
+    gap: 11px;
+
+    border-bottom:
+        1px solid #263244;
+}
+
+.logo-icon {
+    width: 38px;
+    height: 38px;
+
+    border-radius: 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: white;
+    color: #111827;
+
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.logo strong {
+    display: block;
+    font-size: 15px;
+}
+
+.logo small {
+    display: block;
+
+    color: #9ca3af;
+
+    margin-top: 3px;
+}
+
+.nav-menu {
+    padding: 15px 10px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.nav-item {
+    width: 100%;
+
+    border: 0;
+
+    background: transparent;
+    color: #cbd5e1;
+
+    padding: 11px 12px;
+
+    border-radius: 8px;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    text-align: left;
+
+    font-size: 14px;
+}
+
+.nav-item:hover {
+    background: #1f2937;
+    color: white;
+}
+
+.nav-item.active {
+    background: #2563eb;
+    color: white;
+}
+
+.nav-count {
+    margin-left: auto;
+
+    min-width: 20px;
+
+    padding: 2px 6px;
+
+    border-radius: 20px;
+
+    background: #ef4444;
+
+    color: white;
+
+    text-align: center;
+
+    font-size: 11px;
+}
+
+.nav-bottom {
+    margin-top: auto;
+
+    padding: 10px;
+
+    border-top:
+        1px solid #263244;
+}
+
+
+/* =========================================
+   PAGE SYSTEM
+========================================= */
+
+.page-area {
+    min-width: 0;
+    min-height: 0;
+}
+
+.page {
+    display: none;
+
+    width: 100%;
+    height: 100vh;
+}
+
+.page.active {
+    display: block;
+}
+
+
+/* =========================================
+   INBOX
+========================================= */
+
+.inbox-layout {
+    display: grid;
+
+    grid-template-columns:
+        330px 1fr;
+
+    height: 100%;
+}
+
+.conversation-list {
     background: white;
 
     border-right:
@@ -44,72 +215,88 @@ textarea {
     display: flex;
     flex-direction: column;
 
-    overflow: hidden;
+    min-height: 0;
 }
 
-.brand {
-    padding: 24px;
+.list-header {
+    padding: 17px 18px;
 
-    border-bottom:
-        1px solid #e5e7eb;
-}
-
-.brand h1 {
-    margin: 0;
-
-    font-size: 22px;
-}
-
-.brand p {
-    margin:
-        5px 0 0;
-
-    color: #6b7280;
-
-    font-size: 14px;
-}
-
-.sidebar-header {
     display: flex;
-
     align-items: center;
     justify-content: space-between;
 
-    padding:
-        14px 16px;
+    border-bottom:
+        1px solid #e5e7eb;
+}
 
-    font-weight: 600;
+.list-header h2 {
+    margin: 0;
+
+    font-size: 20px;
+}
+
+.list-header p {
+    margin: 4px 0 0;
+
+    color: #6b7280;
+
+    font-size: 12px;
+}
+
+.icon-button {
+    width: 34px;
+    height: 34px;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 8px;
+
+    background: white;
+
+    font-size: 18px;
+}
+
+.filter-row {
+    padding: 10px;
+
+    display: flex;
+    gap: 6px;
 
     border-bottom:
         1px solid #e5e7eb;
 }
 
-.refresh-button {
-    border: none;
+.filter-button {
+    border: 0;
 
-    background: transparent;
+    border-radius: 20px;
 
-    cursor: pointer;
+    padding: 6px 11px;
 
-    color: #2563eb;
+    background: #f3f4f6;
+
+    color: #6b7280;
+
+    font-size: 12px;
+}
+
+.filter-button.active {
+    background: #dbeafe;
+    color: #1d4ed8;
 }
 
 .handoff-list {
     overflow-y: auto;
-
     flex: 1;
 }
 
 .handoff-item {
-    padding: 16px;
+    padding: 15px 16px;
 
     border-bottom:
         1px solid #f0f1f3;
 
     cursor: pointer;
-
-    transition:
-        background 0.15s;
 }
 
 .handoff-item:hover {
@@ -118,27 +305,30 @@ textarea {
 
 .handoff-item.active {
     background: #eff6ff;
+
+    border-left:
+        3px solid #2563eb;
 }
 
 .handoff-top {
     display: flex;
-
-    justify-content:
-        space-between;
+    justify-content: space-between;
 
     gap: 10px;
 }
 
 .business-name {
     font-weight: 600;
+
+    font-size: 14px;
 }
 
 .handoff-summary-text {
+    margin-top: 7px;
+
     color: #6b7280;
 
-    font-size: 13px;
-
-    margin-top: 8px;
+    font-size: 12px;
 
     line-height: 1.4;
 }
@@ -148,14 +338,16 @@ textarea {
 }
 
 
-/* ========================================
+/* =========================================
    CONVERSATION
-======================================== */
+========================================= */
 
-.conversation {
-    display: flex;
-
+.conversation-area {
     min-width: 0;
+
+    height: 100%;
+
+    display: flex;
 }
 
 .conversation-empty {
@@ -166,25 +358,34 @@ textarea {
     color: #6b7280;
 }
 
-.conversation-panel {
-    display: flex;
-
-    flex-direction: column;
-
-    width: 100%;
-
-    height: 100vh;
+.empty-icon {
+    font-size: 42px;
 }
 
-.hidden {
-    display: none;
+.conversation-empty h2 {
+    color: #374151;
+
+    margin-bottom: 6px;
+}
+
+.conversation-empty p {
+    margin: 0;
+}
+
+.conversation-panel {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    min-height: 0;
 }
 
 .conversation-header {
-    min-height: 82px;
+    min-height: 78px;
 
-    padding:
-        16px 24px;
+    padding: 15px 22px;
 
     background: white;
 
@@ -192,48 +393,41 @@ textarea {
         1px solid #e5e7eb;
 
     display: flex;
-
     align-items: center;
+    justify-content: space-between;
 
-    justify-content:
-        space-between;
-
-    gap: 20px;
+    gap: 15px;
 }
 
 .conversation-header h2 {
     margin: 0;
 
-    font-size: 19px;
+    font-size: 18px;
 }
 
 .conversation-meta {
-    margin-top: 5px;
+    margin-top: 4px;
 
     color: #6b7280;
 
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .header-actions {
     display: flex;
-
     align-items: center;
-
-    gap: 10px;
+    gap: 8px;
 }
 
 .status-badge {
-    padding:
-        5px 10px;
+    padding: 5px 9px;
 
     border-radius: 20px;
 
     background: #fef3c7;
-
     color: #92400e;
 
-    font-size: 12px;
+    font-size: 11px;
 
     font-weight: 600;
 
@@ -241,43 +435,36 @@ textarea {
 }
 
 .handoff-summary {
-    padding:
-        12px 24px;
+    padding: 10px 22px;
 
     background: #fffbeb;
 
     border-bottom:
         1px solid #fde68a;
 
-    font-size: 13px;
+    font-size: 12px;
 }
-
-
-/* ========================================
-   MESSAGES
-======================================== */
 
 .messages {
     flex: 1;
 
     overflow-y: auto;
 
-    padding: 24px;
+    padding: 22px;
 
     display: flex;
-
     flex-direction: column;
+    gap: 11px;
 
-    gap: 12px;
+    min-height: 0;
 }
 
 .message {
     max-width: 70%;
 
-    padding:
-        10px 14px;
+    padding: 10px 13px;
 
-    border-radius: 14px;
+    border-radius: 13px;
 
     line-height: 1.45;
 
@@ -306,41 +493,35 @@ textarea {
 }
 
 .message-role {
-    font-size: 11px;
-
-    font-weight: 600;
-
     margin-bottom: 4px;
 
     color: #6b7280;
+
+    font-size: 10px;
+
+    font-weight: 700;
 
     text-transform: uppercase;
 }
 
 .message-time {
-    font-size: 10px;
+    margin-top: 5px;
 
     color: #9ca3af;
 
-    margin-top: 5px;
+    font-size: 10px;
 }
 
-
-/* ========================================
-   REPLY AREA
-======================================== */
-
 .reply-area {
+    padding: 14px;
+
+    display: flex;
+    gap: 10px;
+
     background: white;
 
     border-top:
         1px solid #e5e7eb;
-
-    padding: 16px;
-
-    display: flex;
-
-    gap: 12px;
 }
 
 .reply-area textarea {
@@ -348,12 +529,12 @@ textarea {
 
     resize: none;
 
+    padding: 11px;
+
     border:
         1px solid #d1d5db;
 
-    border-radius: 10px;
-
-    padding: 12px;
+    border-radius: 9px;
 
     outline: none;
 }
@@ -362,42 +543,210 @@ textarea {
     border-color: #2563eb;
 }
 
+
+/* =========================================
+   BUTTONS
+========================================= */
+
 .button {
-    border: none;
+    border: 0;
 
     border-radius: 8px;
 
-    padding:
-        9px 14px;
-
-    cursor: pointer;
+    padding: 9px 13px;
 
     font-weight: 600;
 }
 
 .primary {
     background: #2563eb;
-
     color: white;
 }
 
 .secondary {
     background: #e5e7eb;
-
     color: #111827;
 }
 
 .danger {
     background: #fee2e2;
-
     color: #b91c1c;
 }
 
 .button:disabled {
-    opacity: 0.5;
-
+    opacity: 0.45;
     cursor: not-allowed;
 }
+
+
+/* =========================================
+   STANDARD PAGES
+========================================= */
+
+.standard-page {
+    height: 100%;
+
+    overflow-y: auto;
+
+    padding: 30px;
+}
+
+.page-header {
+    margin-bottom: 25px;
+}
+
+.page-header h1 {
+    margin: 0;
+
+    font-size: 26px;
+}
+
+.page-header p {
+    margin: 6px 0 0;
+
+    color: #6b7280;
+}
+
+.placeholder-card {
+    min-height: 300px;
+
+    background: white;
+
+    border:
+        1px solid #e5e7eb;
+
+    border-radius: 12px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    padding: 30px;
+}
+
+.placeholder-icon {
+    font-size: 44px;
+}
+
+.placeholder-card h2 {
+    margin-bottom: 5px;
+}
+
+.placeholder-card p {
+    margin-top: 0;
+
+    color: #6b7280;
+}
+
+.coming-next,
+.coming-soon {
+    margin-top: 10px;
+
+    padding: 6px 10px;
+
+    border-radius: 20px;
+
+    background: #dbeafe;
+    color: #1d4ed8;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+/* =========================================
+   ANALYTICS
+========================================= */
+
+.stats-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 18px;
+}
+
+.stat-card {
+    background: white;
+
+    padding: 22px;
+
+    border:
+        1px solid #e5e7eb;
+
+    border-radius: 12px;
+}
+
+.stat-card span {
+    display: block;
+
+    color: #6b7280;
+
+    font-size: 13px;
+}
+
+.stat-card strong {
+    display: block;
+
+    margin-top: 10px;
+
+    font-size: 30px;
+}
+
+
+/* =========================================
+   SETTINGS
+========================================= */
+
+.settings-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 15px;
+}
+
+.settings-card {
+    background: white;
+
+    border:
+        1px solid #e5e7eb;
+
+    border-radius: 11px;
+
+    padding: 20px;
+
+    display: flex;
+    gap: 14px;
+
+    font-size: 22px;
+}
+
+.settings-card strong {
+    display: block;
+
+    font-size: 15px;
+}
+
+.settings-card p {
+    margin:
+        5px 0 0;
+
+    color: #6b7280;
+
+    font-size: 12px;
+}
+
+
+/* =========================================
+   EMPTY STATE
+========================================= */
 
 .empty-state {
     padding: 25px;
@@ -405,27 +754,49 @@ textarea {
     text-align: center;
 
     color: #9ca3af;
+
+    font-size: 13px;
 }
 
 
-/* ========================================
-   MOBILE
-======================================== */
+/* =========================================
+   RESPONSIVE
+========================================= */
 
 @media (
-    max-width: 800px
+    max-width: 1000px
 ) {
 
-    .app {
+    .dashboard {
         grid-template-columns:
-            1fr;
+            70px 1fr;
     }
 
-    .sidebar {
+    .logo > div:last-child {
         display: none;
     }
 
-    .message {
-        max-width: 85%;
+    .nav-item {
+        justify-content: center;
+
+        font-size: 0;
+    }
+
+    .nav-item span:first-child {
+        font-size: 18px;
+    }
+
+    .nav-count {
+        display: none;
+    }
+
+    .inbox-layout {
+        grid-template-columns:
+            280px 1fr;
+    }
+
+    .stats-grid {
+        grid-template-columns:
+            repeat(2, 1fr);
     }
 }

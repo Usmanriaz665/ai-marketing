@@ -129,9 +129,11 @@ async function loadHandoffs() {
             );
 
 
-        renderHandoffs(
-            data.handoffs || []
-        );
+        cachedHandoffs =
+            data.handoffs || [];
+
+
+        renderFilteredHandoffs();
 
     }
     catch (error) {
@@ -158,7 +160,23 @@ function renderHandoffs(
 
     handoffList.innerHTML = "";
 
+    const inboxCount =
+        document.getElementById(
+            "inboxCount"
+        );
 
+
+    if (inboxCount) {
+
+        inboxCount.textContent =
+            handoffs.length;
+
+
+        inboxCount.classList.toggle(
+            "hidden",
+            handoffs.length === 0
+        );
+    }
     if (
         handoffs.length === 0
     ) {
@@ -202,7 +220,7 @@ function renderHandoffs(
 
         const priority =
             handoff.priority ===
-            "high"
+                "high"
                 ? "priority-high"
                 : "";
 
@@ -213,24 +231,24 @@ function renderHandoffs(
 
                 <span class="business-name">
                     ${escapeHtml(
-                        handoff.business_id
-                    )}
+                handoff.business_id
+            )}
                 </span>
 
                 <span class="${priority}">
                     ${escapeHtml(
-                        handoff.status
-                    )}
+                handoff.status
+            )}
                 </span>
 
             </div>
 
             <div class="handoff-summary-text">
                 ${escapeHtml(
-                    handoff.summary ||
-                    handoff.reason ||
-                    "Human assistance requested"
-                )}
+                handoff.summary ||
+                handoff.reason ||
+                "Human assistance requested"
+            )}
             </div>
             `;
 
@@ -409,14 +427,14 @@ function renderConversation(
 
             <div>
                 ${escapeHtml(
-                    message.content
-                )}
+                message.content
+            )}
             </div>
 
             <div class="message-time">
                 ${formatDate(
-                    message.created_at
-                )}
+                message.created_at
+            )}
             </div>
             `;
 
@@ -742,7 +760,160 @@ setInterval(
     5000
 );
 
+let currentHandoffFilter =
+    "all";
 
+let cachedHandoffs =
+    [];
+
+
+const filterButtons =
+    document.querySelectorAll(
+        ".filter-button"
+    );
+
+
+filterButtons.forEach(
+    button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                currentHandoffFilter =
+                    button.dataset.filter;
+
+
+                filterButtons.forEach(
+                    item =>
+                        item.classList.remove(
+                            "active"
+                        )
+                );
+
+
+                button.classList.add(
+                    "active"
+                );
+
+
+                renderFilteredHandoffs();
+            }
+        );
+    }
+);
+
+
+function renderFilteredHandoffs() {
+
+    if (
+        currentHandoffFilter ===
+        "all"
+    ) {
+
+        renderHandoffs(
+            cachedHandoffs
+        );
+
+        return;
+    }
+
+
+    const filtered =
+        cachedHandoffs.filter(
+            handoff =>
+                handoff.status ===
+                currentHandoffFilter
+        );
+
+
+    renderHandoffs(
+        filtered
+    );
+}
+
+// ========================================
+// DASHBOARD NAVIGATION
+// ========================================
+
+const navItems =
+    document.querySelectorAll(
+        ".nav-item[data-page]"
+    );
+
+const pages =
+    document.querySelectorAll(
+        ".page"
+    );
+
+
+function showPage(
+    pageName
+) {
+
+    pages.forEach(
+        page => {
+
+            page.classList.remove(
+                "active"
+            );
+        }
+    );
+
+
+    navItems.forEach(
+        item => {
+
+            item.classList.remove(
+                "active"
+            );
+        }
+    );
+
+
+    const page =
+        document.getElementById(
+            `page-${pageName}`
+        );
+
+
+    if (page) {
+
+        page.classList.add(
+            "active"
+        );
+    }
+
+
+    const navItem =
+        document.querySelector(
+            `.nav-item[data-page="${pageName}"]`
+        );
+
+
+    if (navItem) {
+
+        navItem.classList.add(
+            "active"
+        );
+    }
+}
+
+
+navItems.forEach(
+    item => {
+
+        item.addEventListener(
+            "click",
+            () => {
+
+                showPage(
+                    item.dataset.page
+                );
+            }
+        );
+    }
+);
 // ========================================
 // INITIAL LOAD
 // ========================================
