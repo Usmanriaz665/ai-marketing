@@ -919,3 +919,702 @@ navItems.forEach(
 // ========================================
 
 loadHandoffs();
+
+// ========================================
+// LEADS
+// ========================================
+
+let cachedLeads = [];
+
+let currentLeadFilter = "all";
+
+
+// ========================================
+// LOAD LEADS
+// ========================================
+
+async function loadLeads() {
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/leads"
+            );
+
+        const data =
+            await response.json();
+
+
+        if (!data.success) {
+            throw new Error(
+                "Failed loading leads"
+            );
+        }
+
+
+        cachedLeads =
+            data.leads || [];
+
+
+        const leadCount =
+            document.getElementById(
+                "leadCount"
+            );
+
+        if (leadCount) {
+            leadCount.textContent =
+                cachedLeads.length;
+        }
+
+
+        renderFilteredLeads();
+
+    }
+    catch (error) {
+
+        console.error(
+            "Failed loading leads:",
+            error
+        );
+
+
+        const body =
+            document.getElementById(
+                "leadsTableBody"
+            );
+
+        if (body) {
+
+            body.innerHTML = `
+                <tr>
+                    <td
+                        colspan="6"
+                        class="empty-table"
+                    >
+                        Failed to load leads.
+                    </td>
+                </tr>
+            `;
+        }
+    }
+}
+
+
+// ========================================
+// FILTER LEADS
+// ========================================
+
+function renderFilteredLeads() {
+
+    let leads =
+        cachedLeads;
+
+
+    if (
+        currentLeadFilter !==
+        "all"
+    ) {
+
+        leads =
+            cachedLeads.filter(
+                lead =>
+                    lead.status ===
+                    currentLeadFilter
+            );
+    }
+
+
+    renderLeads(
+        leads
+    );
+}
+
+
+// ========================================
+// RENDER LEADS
+// ========================================
+
+function renderLeads(
+    leads
+) {
+
+    const body =
+        document.getElementById(
+            "leadsTableBody"
+        );
+
+
+    if (!body) {
+        return;
+    }
+
+
+    if (
+        !leads.length
+    ) {
+
+        body.innerHTML = `
+            <tr>
+                <td
+                    colspan="6"
+                    class="empty-table"
+                >
+                    No leads found.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    body.innerHTML =
+        leads.map(
+            lead => {
+
+                const contact =
+                    lead.phone ||
+                    lead.email ||
+                    "—";
+
+
+                const source =
+                    lead.source ||
+                    "Unknown";
+
+
+                return `
+                    <tr
+                        class="lead-row"
+                        data-lead-id="${lead.id}"
+                    >
+
+                        <td>
+                            <strong>
+                                ${escapeHtml(
+                                    lead.name ||
+                                    "Unknown"
+                                )}
+                            </strong>
+
+                            <div class="lead-id">
+                                Lead #${lead.id}
+                            </div>
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                contact
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                lead.summary ||
+                                "—"
+                            )}
+                        </td>
+
+                        <td>
+                            <span class="source-badge">
+                                ${escapeHtml(
+                                    source
+                                )}
+                            </span>
+                        </td>
+
+                        <td>
+
+                            <select
+                                class="lead-status-select"
+                                data-lead-id="${lead.id}"
+                            >
+
+                                ${buildLeadStatusOptions(
+                                    lead.status
+                                )}
+
+                            </select>
+
+                        </td>
+
+                        <td>
+                            ${formatLeadDate(
+                                lead.created_at
+                            )}
+                        </td>
+
+                    </tr>
+                `;
+            }
+        ).join("");
+
+
+    document
+        .querySelectorAll(
+            ".lead-row"
+        )
+        .forEach(
+            row => {
+
+                row.addEventListener(
+                    "click",
+                    event => {
+
+                        if (
+                            event.target.closest(
+                                ".lead-status-select"
+                            )
+                        ) {
+                            return;
+                        }
+
+                        const leadId =
+                            Number(
+                                row.dataset.leadId
+                            );
+
+                        showLeadDetails(
+                            leadId
+                        );
+                    }
+                );
+            }
+        );
+
+
+    document
+        .querySelectorAll(
+            ".lead-status-select"
+        )
+        .forEach(
+            select => {
+
+                select.addEventListener(
+                    "change",
+                    async event => {
+
+                        const leadId =
+                            Number(
+                                event.target.dataset.leadId
+                            );
+
+                        await updateLeadStatus(
+                            leadId,
+                            event.target.value
+                        );
+                    }
+                );
+            }
+        );
+}
+
+
+// ========================================
+// STATUS OPTIONS
+// ========================================
+
+function buildLeadStatusOptions(
+    currentStatus
+) {
+
+    const statuses = [
+        "new",
+        "contacted",
+        "converted",
+        "lost"
+    ];
+
+
+    return statuses.map(
+        status => {
+
+            const selected =
+                status === currentStatus
+                    ? "selected"
+                    : "";
+
+
+            const label =
+                status.charAt(0)
+                    .toUpperCase() +
+                status.slice(1);
+
+
+            return `
+                <option
+                    value="${status}"
+                    ${selected}
+                >
+                    ${label}
+                </option>
+            `;
+        }
+    ).join("");
+}
+
+
+// ========================================
+// UPDATE LEAD STATUS
+// ========================================
+
+async function updateLeadStatus(
+    leadId,
+    status
+) {
+
+    try {
+
+        const response =
+            await fetch(
+                `/api/leads/${leadId}/status`,
+                {
+                    method: "PATCH",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            status
+                        })
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!data.success) {
+            throw new Error(
+                "Failed updating lead"
+            );
+        }
+
+
+        const lead =
+            cachedLeads.find(
+                item =>
+                    item.id === leadId
+            );
+
+
+        if (lead) {
+            lead.status = status;
+        }
+
+
+        renderFilteredLeads();
+
+    }
+    catch (error) {
+
+        console.error(
+            "Failed updating lead:",
+            error
+        );
+
+        await loadLeads();
+    }
+}
+
+
+// ========================================
+// LEAD DETAILS
+// ========================================
+
+function showLeadDetails(
+    leadId
+) {
+
+    const lead =
+        cachedLeads.find(
+            item =>
+                item.id === leadId
+        );
+
+
+    if (!lead) {
+        return;
+    }
+
+
+    const panel =
+        document.getElementById(
+            "leadDetails"
+        );
+
+
+    const name =
+        document.getElementById(
+            "leadDetailsName"
+        );
+
+
+    const summary =
+        document.getElementById(
+            "leadDetailsSummary"
+        );
+
+
+    const content =
+        document.getElementById(
+            "leadDetailsContent"
+        );
+
+
+    if (
+        !panel ||
+        !name ||
+        !summary ||
+        !content
+    ) {
+        return;
+    }
+
+
+    name.textContent =
+        lead.name ||
+        `Lead #${lead.id}`;
+
+
+    summary.textContent =
+        lead.summary ||
+        "";
+
+
+    const metadata =
+        lead.metadata || {};
+
+
+    content.innerHTML = `
+
+        ${leadDetailItem(
+            "Phone",
+            lead.phone
+        )}
+
+        ${leadDetailItem(
+            "Email",
+            lead.email
+        )}
+
+        ${leadDetailItem(
+            "Source",
+            lead.source
+        )}
+
+        ${leadDetailItem(
+            "Status",
+            lead.status
+        )}
+
+        ${leadDetailItem(
+            "Device",
+            metadata.device
+        )}
+
+        ${leadDetailItem(
+            "Service",
+            metadata.service
+        )}
+
+        ${leadDetailItem(
+            "Quoted Price",
+            metadata.quoted_price
+        )}
+
+        ${leadDetailItem(
+            "Duration",
+            metadata.duration
+        )}
+
+        ${leadDetailItem(
+            "Warranty",
+            metadata.warranty
+        )}
+
+        ${leadDetailItem(
+            "Intent",
+            metadata.intent
+        )}
+
+    `;
+
+
+    panel.classList.remove(
+        "hidden"
+    );
+}
+
+
+function leadDetailItem(
+    label,
+    value
+) {
+
+    return `
+        <div class="lead-detail-item">
+
+            <span>
+                ${escapeHtml(label)}
+            </span>
+
+            <strong>
+                ${escapeHtml(
+                    value || "—"
+                )}
+            </strong>
+
+        </div>
+    `;
+}
+
+
+// ========================================
+// CLOSE DETAILS
+// ========================================
+
+const closeLeadDetails =
+    document.getElementById(
+        "closeLeadDetails"
+    );
+
+
+if (
+    closeLeadDetails
+) {
+
+    closeLeadDetails.addEventListener(
+        "click",
+        () => {
+
+            document
+                .getElementById(
+                    "leadDetails"
+                )
+                ?.classList.add(
+                    "hidden"
+                );
+        }
+    );
+}
+
+
+// ========================================
+// LEAD FILTER BUTTONS
+// ========================================
+
+document
+    .querySelectorAll(
+        ".lead-filter-button"
+    )
+    .forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    currentLeadFilter =
+                        button.dataset.leadFilter;
+
+
+                    document
+                        .querySelectorAll(
+                            ".lead-filter-button"
+                        )
+                        .forEach(
+                            item =>
+                                item.classList.remove(
+                                    "active"
+                                )
+                        );
+
+
+                    button.classList.add(
+                        "active"
+                    );
+
+
+                    renderFilteredLeads();
+                }
+            );
+        }
+    );
+
+
+// ========================================
+// HELPERS
+// ========================================
+
+function formatLeadDate(
+    date
+) {
+
+    if (!date) {
+        return "—";
+    }
+
+
+    const parsed =
+        new Date(
+            date.replace(
+                " ",
+                "T"
+            ) + "Z"
+        );
+
+
+    if (
+        Number.isNaN(
+            parsed.getTime()
+        )
+    ) {
+        return date;
+    }
+
+
+    return parsed.toLocaleString();
+}
+
+
+function escapeHtml(
+    value
+) {
+
+    return String(
+        value ?? ""
+    )
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+}
+
+
+// ========================================
+// INITIAL LEAD LOAD
+// ========================================
+
+loadLeads();

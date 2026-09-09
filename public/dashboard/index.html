@@ -4,318 +4,236 @@
 <head>
     <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>AI Marketing</title>
 
-    <link
-        rel="stylesheet"
-        href="/dashboard/style.css"
-    >
+    <link rel="stylesheet" href="/dashboard/style.css">
 </head>
 
 <body>
 
-<div class="dashboard">
+    <div class="dashboard">
 
-    <!-- =========================================
+        <!-- =========================================
          MAIN NAVIGATION
     ========================================== -->
 
-    <aside class="main-nav">
+        <aside class="main-nav">
 
-        <div class="logo">
-            <div class="logo-icon">AI</div>
+            <div class="logo">
+                <div class="logo-icon">AI</div>
 
-            <div>
-                <strong>AI Marketing</strong>
-                <small>Control Center</small>
+                <div>
+                    <strong>AI Marketing</strong>
+                    <small>Control Center</small>
+                </div>
             </div>
-        </div>
 
 
-        <nav class="nav-menu">
+            <nav class="nav-menu">
 
-            <button
-                class="nav-item active"
-                data-page="inbox"
-            >
-                <span>💬</span>
-                Inbox
+                <button class="nav-item active" data-page="inbox">
+                    <span>💬</span>
+                    Inbox
 
-                <span
-                    id="inboxCount"
-                    class="nav-count hidden"
-                >
-                    0
-                </span>
-            </button>
+                    <span id="inboxCount" class="nav-count hidden">
+                        0
+                    </span>
+                </button>
 
 
-            <button
-                class="nav-item"
-                data-page="leads"
-            >
-                <span>🎯</span>
-                Leads
-            </button>
+                <button class="nav-item" data-page="leads">
+                    <span>🎯</span>
+                    Leads
+                </button>
 
 
-            <button
-                class="nav-item"
-                data-page="automations"
-            >
-                <span>⚡</span>
-                Automations
-            </button>
+                <button class="nav-item" data-page="automations">
+                    <span>⚡</span>
+                    Automations
+                </button>
 
 
-            <button
-                class="nav-item"
-                data-page="marketplace"
-            >
-                <span>🛒</span>
-                Marketplace
-            </button>
+                <button class="nav-item" data-page="marketplace">
+                    <span>🛒</span>
+                    Marketplace
+                </button>
 
 
-            <button
-                class="nav-item"
-                data-page="analytics"
-            >
-                <span>📊</span>
-                Analytics
-            </button>
+                <button class="nav-item" data-page="analytics">
+                    <span>📊</span>
+                    Analytics
+                </button>
 
-        </nav>
+            </nav>
 
 
-        <div class="nav-bottom">
+            <div class="nav-bottom">
 
-            <button
-                class="nav-item"
-                data-page="settings"
-            >
-                <span>⚙️</span>
-                Settings
-            </button>
+                <button class="nav-item" data-page="settings">
+                    <span>⚙️</span>
+                    Settings
+                </button>
 
-        </div>
+            </div>
 
-    </aside>
+        </aside>
 
 
 
-    <!-- =========================================
+        <!-- =========================================
          PAGE AREA
     ========================================== -->
 
-    <main class="page-area">
+        <main class="page-area">
 
 
-        <!-- =====================================
+            <!-- =====================================
              INBOX PAGE
         ====================================== -->
 
-        <section
-            id="page-inbox"
-            class="page active"
-        >
+            <section id="page-inbox" class="page active">
 
-            <div class="inbox-layout">
+                <div class="inbox-layout">
 
 
-                <!-- HANDOFF LIST -->
+                    <!-- HANDOFF LIST -->
 
-                <aside class="conversation-list">
+                    <aside class="conversation-list">
 
-                    <div class="list-header">
-
-                        <div>
-                            <h2>Inbox</h2>
-                            <p>Human conversations</p>
-                        </div>
-
-                        <button
-                            id="refreshButton"
-                            class="icon-button"
-                            title="Refresh"
-                        >
-                            ↻
-                        </button>
-
-                    </div>
-
-
-                    <div class="filter-row">
-
-                        <button
-                            class="filter-button active"
-                            data-filter="all"
-                        >
-                            All
-                        </button>
-
-                        <button
-                            class="filter-button"
-                            data-filter="pending"
-                        >
-                            Pending
-                        </button>
-
-                        <button
-                            class="filter-button"
-                            data-filter="taken"
-                        >
-                            Taken
-                        </button>
-
-                    </div>
-
-
-                    <div
-                        id="handoffList"
-                        class="handoff-list"
-                    >
-
-                        <div class="empty-state">
-                            Loading conversations...
-                        </div>
-
-                    </div>
-
-                </aside>
-
-
-
-                <!-- CONVERSATION -->
-
-                <section class="conversation-area">
-
-
-                    <div
-                        id="emptyConversation"
-                        class="conversation-empty"
-                    >
-
-                        <div class="empty-icon">
-                            💬
-                        </div>
-
-                        <h2>Select a conversation</h2>
-
-                        <p>
-                            Choose a customer conversation
-                            from the inbox.
-                        </p>
-
-                    </div>
-
-
-
-                    <div
-                        id="conversationPanel"
-                        class="conversation-panel hidden"
-                    >
-
-
-                        <header class="conversation-header">
+                        <div class="list-header">
 
                             <div>
-
-                                <h2 id="customerName">
-                                    Customer
-                                </h2>
-
-                                <div
-                                    id="conversationMeta"
-                                    class="conversation-meta"
-                                ></div>
-
+                                <h2>Inbox</h2>
+                                <p>Human conversations</p>
                             </div>
 
-
-                            <div class="header-actions">
-
-                                <span
-                                    id="statusBadge"
-                                    class="status-badge"
-                                ></span>
-
-                                <button
-                                    id="takeButton"
-                                    class="button secondary"
-                                >
-                                    Take
-                                </button>
-
-                                <button
-                                    id="resolveButton"
-                                    class="button danger"
-                                >
-                                    Resolve
-                                </button>
-
-                            </div>
-
-                        </header>
-
-
-
-                        <div
-                            id="handoffSummary"
-                            class="handoff-summary"
-                        ></div>
-
-
-
-                        <div
-                            id="messages"
-                            class="messages"
-                        ></div>
-
-
-
-                        <div class="reply-area">
-
-                            <textarea
-                                id="replyInput"
-                                placeholder="Type your reply..."
-                                rows="2"
-                            ></textarea>
-
-                            <button
-                                id="sendButton"
-                                class="button primary"
-                            >
-                                Send
+                            <button id="refreshButton" class="icon-button" title="Refresh">
+                                ↻
                             </button>
 
                         </div>
 
-                    </div>
 
-                </section>
+                        <div class="filter-row">
 
-            </div>
+                            <button class="filter-button active" data-filter="all">
+                                All
+                            </button>
 
-        </section>
+                            <button class="filter-button" data-filter="pending">
+                                Pending
+                            </button>
+
+                            <button class="filter-button" data-filter="taken">
+                                Taken
+                            </button>
+
+                        </div>
+
+
+                        <div id="handoffList" class="handoff-list">
+
+                            <div class="empty-state">
+                                Loading conversations...
+                            </div>
+
+                        </div>
+
+                    </aside>
 
 
 
-        <!-- =====================================
+                    <!-- CONVERSATION -->
+
+                    <section class="conversation-area">
+
+
+                        <div id="emptyConversation" class="conversation-empty">
+
+                            <div class="empty-icon">
+                                💬
+                            </div>
+
+                            <h2>Select a conversation</h2>
+
+                            <p>
+                                Choose a customer conversation
+                                from the inbox.
+                            </p>
+
+                        </div>
+
+
+
+                        <div id="conversationPanel" class="conversation-panel hidden">
+
+
+                            <header class="conversation-header">
+
+                                <div>
+
+                                    <h2 id="customerName">
+                                        Customer
+                                    </h2>
+
+                                    <div id="conversationMeta" class="conversation-meta"></div>
+
+                                </div>
+
+
+                                <div class="header-actions">
+
+                                    <span id="statusBadge" class="status-badge"></span>
+
+                                    <button id="takeButton" class="button secondary">
+                                        Take
+                                    </button>
+
+                                    <button id="resolveButton" class="button danger">
+                                        Resolve
+                                    </button>
+
+                                </div>
+
+                            </header>
+
+
+
+                            <div id="handoffSummary" class="handoff-summary"></div>
+
+
+
+                            <div id="messages" class="messages"></div>
+
+
+
+                            <div class="reply-area">
+
+                                <textarea id="replyInput" placeholder="Type your reply..." rows="2"></textarea>
+
+                                <button id="sendButton" class="button primary">
+                                    Send
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =====================================
              LEADS
         ====================================== -->
 
-        <section
-            id="page-leads"
-            class="page"
-        >
-
-            <div class="standard-page">
+            <section id="page-leads" class="page">
 
                 <div class="page-header">
 
@@ -323,262 +241,317 @@
                         <h1>Leads</h1>
 
                         <p>
-                            Customers captured by your AI agents.
+                            Manage customers who are interested
+                            in your services.
                         </p>
                     </div>
 
-                </div>
-
-
-                <div class="placeholder-card">
-
-                    <div class="placeholder-icon">
-                        🎯
+                    <div class="lead-total">
+                        <span id="leadCount">0</span>
+                        leads
                     </div>
 
-                    <h2>Lead Management</h2>
+                </div>
 
-                    <p>
-                        Your captured leads will appear here.
-                    </p>
 
-                    <span class="coming-next">
-                        Building next
-                    </span>
+                <div class="lead-filters">
+
+                    <button class="lead-filter-button active" data-lead-filter="all">
+                        All
+                    </button>
+
+                    <button class="lead-filter-button" data-lead-filter="new">
+                        New
+                    </button>
+
+                    <button class="lead-filter-button" data-lead-filter="contacted">
+                        Contacted
+                    </button>
+
+                    <button class="lead-filter-button" data-lead-filter="converted">
+                        Converted
+                    </button>
+
+                    <button class="lead-filter-button" data-lead-filter="lost">
+                        Lost
+                    </button>
 
                 </div>
 
-            </div>
 
-        </section>
+                <div class="leads-table-container">
+
+                    <table class="leads-table">
+
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Contact</th>
+                                <th>Request</th>
+                                <th>Source</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="leadsTableBody">
+
+                            <tr>
+                                <td colspan="6" class="empty-table">
+                                    Loading leads...
+                                </td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                <div id="leadDetails" class="lead-details hidden">
+
+                    <div class="lead-details-header">
+
+                        <div>
+                            <h2 id="leadDetailsName">
+                                Lead
+                            </h2>
+
+                            <p id="leadDetailsSummary">
+                            </p>
+                        </div>
+
+                        <button id="closeLeadDetails" class="secondary-button">
+                            Close
+                        </button>
+
+                    </div>
+
+
+                    <div id="leadDetailsContent" class="lead-details-grid">
+                    </div>
+
+                </div>
+
+            </section>
 
 
 
-        <!-- =====================================
+            <!-- =====================================
              AUTOMATIONS
         ====================================== -->
 
-        <section
-            id="page-automations"
-            class="page"
-        >
+            <section id="page-automations" class="page">
 
-            <div class="standard-page">
+                <div class="standard-page">
 
-                <div class="page-header">
-                    <div>
-                        <h1>Automations</h1>
+                    <div class="page-header">
+                        <div>
+                            <h1>Automations</h1>
+
+                            <p>
+                                Configure automated customer
+                                engagement workflows.
+                            </p>
+                        </div>
+                    </div>
+
+
+                    <div class="placeholder-card">
+
+                        <div class="placeholder-icon">
+                            ⚡
+                        </div>
+
+                        <h2>Marketing Automations</h2>
 
                         <p>
-                            Configure automated customer
-                            engagement workflows.
+                            Automated messaging and lead workflows
+                            will be managed here.
                         </p>
+
                     </div>
-                </div>
-
-
-                <div class="placeholder-card">
-
-                    <div class="placeholder-icon">
-                        ⚡
-                    </div>
-
-                    <h2>Marketing Automations</h2>
-
-                    <p>
-                        Automated messaging and lead workflows
-                        will be managed here.
-                    </p>
 
                 </div>
 
-            </div>
-
-        </section>
+            </section>
 
 
 
-        <!-- =====================================
+            <!-- =====================================
              MARKETPLACE
         ====================================== -->
 
-        <section
-            id="page-marketplace"
-            class="page"
-        >
+            <section id="page-marketplace" class="page">
 
-            <div class="standard-page">
+                <div class="standard-page">
 
-                <div class="page-header">
+                    <div class="page-header">
 
-                    <div>
-                        <h1>Facebook Marketplace</h1>
+                        <div>
+                            <h1>Facebook Marketplace</h1>
+
+                            <p>
+                                Marketplace listing and inquiry
+                                automation.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="placeholder-card">
+
+                        <div class="placeholder-icon">
+                            🛒
+                        </div>
+
+                        <h2>Marketplace Automation</h2>
 
                         <p>
-                            Marketplace listing and inquiry
-                            automation.
+                            This module will manage Marketplace
+                            workflows and incoming opportunities.
                         </p>
+
+                        <span class="coming-soon">
+                            Coming next
+                        </span>
+
                     </div>
 
                 </div>
 
-
-                <div class="placeholder-card">
-
-                    <div class="placeholder-icon">
-                        🛒
-                    </div>
-
-                    <h2>Marketplace Automation</h2>
-
-                    <p>
-                        This module will manage Marketplace
-                        workflows and incoming opportunities.
-                    </p>
-
-                    <span class="coming-soon">
-                        Coming next
-                    </span>
-
-                </div>
-
-            </div>
-
-        </section>
+            </section>
 
 
 
-        <!-- =====================================
+            <!-- =====================================
              ANALYTICS
         ====================================== -->
 
-        <section
-            id="page-analytics"
-            class="page"
-        >
+            <section id="page-analytics" class="page">
 
-            <div class="standard-page">
+                <div class="standard-page">
 
-                <div class="page-header">
-                    <div>
-                        <h1>Analytics</h1>
+                    <div class="page-header">
+                        <div>
+                            <h1>Analytics</h1>
 
-                        <p>
-                            Measure conversations,
-                            leads and conversions.
-                        </p>
+                            <p>
+                                Measure conversations,
+                                leads and conversions.
+                            </p>
+                        </div>
                     </div>
+
+
+                    <div class="stats-grid">
+
+                        <div class="stat-card">
+                            <span>Conversations</span>
+                            <strong>—</strong>
+                        </div>
+
+                        <div class="stat-card">
+                            <span>Leads</span>
+                            <strong>—</strong>
+                        </div>
+
+                        <div class="stat-card">
+                            <span>Human Handoffs</span>
+                            <strong>—</strong>
+                        </div>
+
+                        <div class="stat-card">
+                            <span>Conversions</span>
+                            <strong>—</strong>
+                        </div>
+
+                    </div>
+
                 </div>
 
-
-                <div class="stats-grid">
-
-                    <div class="stat-card">
-                        <span>Conversations</span>
-                        <strong>—</strong>
-                    </div>
-
-                    <div class="stat-card">
-                        <span>Leads</span>
-                        <strong>—</strong>
-                    </div>
-
-                    <div class="stat-card">
-                        <span>Human Handoffs</span>
-                        <strong>—</strong>
-                    </div>
-
-                    <div class="stat-card">
-                        <span>Conversions</span>
-                        <strong>—</strong>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
+            </section>
 
 
 
-        <!-- =====================================
+            <!-- =====================================
              SETTINGS
         ====================================== -->
 
-        <section
-            id="page-settings"
-            class="page"
-        >
+            <section id="page-settings" class="page">
 
-            <div class="standard-page">
+                <div class="standard-page">
 
-                <div class="page-header">
-                    <div>
-                        <h1>Settings</h1>
+                    <div class="page-header">
+                        <div>
+                            <h1>Settings</h1>
 
-                        <p>
-                            Configure your business and
-                            connected platforms.
-                        </p>
+                            <p>
+                                Configure your business and
+                                connected platforms.
+                            </p>
+                        </div>
                     </div>
+
+
+                    <div class="settings-grid">
+
+                        <div class="settings-card">
+                            <span>🏢</span>
+                            <div>
+                                <strong>Business</strong>
+                                <p>Business profile and information</p>
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <span>📘</span>
+                            <div>
+                                <strong>Facebook</strong>
+                                <p>Facebook Page connection</p>
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <span>📸</span>
+                            <div>
+                                <strong>Instagram</strong>
+                                <p>Instagram connection</p>
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <span>🤖</span>
+                            <div>
+                                <strong>AI Agent</strong>
+                                <p>Tone and AI behaviour</p>
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <span>👥</span>
+                            <div>
+                                <strong>Team</strong>
+                                <p>Human agents and permissions</p>
+                            </div>
+                        </div>
+
+                    </div>
+
                 </div>
 
-
-                <div class="settings-grid">
-
-                    <div class="settings-card">
-                        <span>🏢</span>
-                        <div>
-                            <strong>Business</strong>
-                            <p>Business profile and information</p>
-                        </div>
-                    </div>
-
-                    <div class="settings-card">
-                        <span>📘</span>
-                        <div>
-                            <strong>Facebook</strong>
-                            <p>Facebook Page connection</p>
-                        </div>
-                    </div>
-
-                    <div class="settings-card">
-                        <span>📸</span>
-                        <div>
-                            <strong>Instagram</strong>
-                            <p>Instagram connection</p>
-                        </div>
-                    </div>
-
-                    <div class="settings-card">
-                        <span>🤖</span>
-                        <div>
-                            <strong>AI Agent</strong>
-                            <p>Tone and AI behaviour</p>
-                        </div>
-                    </div>
-
-                    <div class="settings-card">
-                        <span>👥</span>
-                        <div>
-                            <strong>Team</strong>
-                            <p>Human agents and permissions</p>
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
+            </section>
 
 
-    </main>
+        </main>
 
-</div>
+    </div>
 
 
-<script src="/dashboard/app.js"></script>
+    <script src="/dashboard/app.js"></script>
 
 </body>
+
 </html>
