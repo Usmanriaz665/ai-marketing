@@ -13,6 +13,8 @@ const facebookWebhook =
 const app = express();
 const handoffRoutes =
     require("./routes/handoffRoutes");
+const leadRoutes =
+    require("./routes/leadRoutes");
 
 const PORT =
     process.env.PORT || 3000;
@@ -30,6 +32,10 @@ app.use(
 app.use(
     "/api/handoffs",
     handoffRoutes
+);
+app.use(
+    "/api/leads",
+    leadRoutes
 );
 // Health check
 app.get("/", (req, res) => {
