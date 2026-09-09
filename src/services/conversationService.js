@@ -2,6 +2,10 @@ const db =
     require("../database/database");
 
 
+// ========================================
+// SQLITE HELPERS
+// ========================================
+
 function run(sql, params = []) {
 
     return new Promise(
@@ -22,6 +26,7 @@ function run(sql, params = []) {
                     });
                 }
             );
+
         }
     );
 }
@@ -44,6 +49,7 @@ function get(sql, params = []) {
                     resolve(row);
                 }
             );
+
         }
     );
 }
@@ -66,6 +72,7 @@ function all(sql, params = []) {
                     resolve(rows);
                 }
             );
+
         }
     );
 }
@@ -86,6 +93,7 @@ async function getOrCreateCustomer(
             `
             SELECT *
             FROM customers
+
             WHERE business_id = ?
               AND platform = ?
               AND platform_customer_id = ?
@@ -111,6 +119,7 @@ async function getOrCreateCustomer(
                 platform,
                 platform_customer_id
             )
+
             VALUES (?, ?, ?)
             `,
             [
@@ -128,7 +137,9 @@ async function getOrCreateCustomer(
             FROM customers
             WHERE id = ?
             `,
-            [result.id]
+            [
+                result.id
+            ]
         );
 
 
@@ -143,7 +154,50 @@ async function getOrCreateCustomer(
 
 
 // ========================================
-// CONVERSATION
+// GET EXISTING OPEN CONVERSATION
+// ========================================
+
+async function getOpenConversation(
+    businessId,
+    customerId,
+    platform
+) {
+
+    return await get(
+        `
+        SELECT *
+        FROM conversations
+
+        WHERE business_id = ?
+          AND customer_id = ?
+          AND platform = ?
+          AND status IN (
+              'active',
+              'handoff'
+          )
+
+        ORDER BY
+            CASE
+                WHEN status = 'handoff'
+                THEN 0
+                ELSE 1
+            END,
+
+            id DESC
+
+        LIMIT 1
+        `,
+        [
+            businessId,
+            customerId,
+            platform
+        ]
+    );
+}
+
+
+// ========================================
+// GET OR CREATE CONVERSATION
 // ========================================
 
 async function getOrCreateConversation(
@@ -161,24 +215,16 @@ async function getOrCreateConversation(
 
 
     let conversation =
-        await get(
-            `
-            SELECT *
-            FROM conversations
-            WHERE business_id = ?
-              AND customer_id = ?
-              AND platform = ?
-              AND status = 'active'
-            ORDER BY id DESC
-            LIMIT 1
-            `,
-            [
-                businessId,
-                customer.id,
-                platform
-            ]
+        await getOpenConversation(
+            businessId,
+            customer.id,
+            platform
         );
 
+
+    // ========================================
+    // EXISTING ACTIVE/HANDOFF CONVERSATION
+    // ========================================
 
     if (conversation) {
 
@@ -189,15 +235,21 @@ async function getOrCreateConversation(
     }
 
 
+    // ========================================
+    // CREATE NEW ACTIVE CONVERSATION
+    // ========================================
+
     const result =
         await run(
             `
             INSERT INTO conversations (
                 business_id,
                 customer_id,
-                platform
+                platform,
+                status
             )
-            VALUES (?, ?, ?)
+
+            VALUES (?, ?, ?, 'active')
             `,
             [
                 businessId,
@@ -214,7 +266,9 @@ async function getOrCreateConversation(
             FROM conversations
             WHERE id = ?
             `,
-            [result.id]
+            [
+                result.id
+            ]
         );
 
 
@@ -231,25 +285,39 @@ async function getOrCreateConversation(
 }
 
 
-async function messageExists(platformMessageId) {
+// ========================================
+// MESSAGE EXISTS
+// ========================================
+
+async function messageExists(
+    platformMessageId
+) {
 
     if (!platformMessageId) {
         return false;
     }
+
 
     const row =
         await get(
             `
             SELECT id
             FROM messages
+
             WHERE platform_message_id = ?
+
             LIMIT 1
             `,
-            [platformMessageId]
+            [
+                platformMessageId
+            ]
         );
+
 
     return !!row;
 }
+
+
 // ========================================
 // SAVE MESSAGE
 // ========================================
@@ -263,14 +331,21 @@ async function addMessage(
     platformMessageId = null
 ) {
 
+    // ========================================
+    // DUPLICATE PLATFORM MESSAGE PROTECTION
+    // ========================================
+
     if (
-        role === "user" &&
         platformMessageId &&
-        await messageExists(platformMessageId)
+        await messageExists(
+            platformMessageId
+        )
     ) {
+
         console.log(
-            `🔁 Duplicate message ignored: ${platformMessageId}`
+            `🔁 Duplicate platform message ignored: ${platformMessageId}`
         );
+
 
         return {
             duplicate: true
@@ -278,7 +353,22 @@ async function addMessage(
     }
 
 
+    // ========================================
+    // GET OPEN CONVERSATION
+    //
+    // IMPORTANT:
+    // This may return either:
+    //
+    // active
+    // OR
+    // handoff
+    //
+    // This prevents handoff conversations
+    // from being split into new conversations.
+    // ========================================
+
     const {
+        customer,
         conversation
     } =
         await getOrCreateConversation(
@@ -288,97 +378,167 @@ async function addMessage(
         );
 
 
-    await run(
-        `
-        INSERT INTO messages (
-            conversation_id,
-            role,
-            content,
-            platform_message_id
-        )
-        VALUES (?, ?, ?, ?)
-        `,
-        [
-            conversation.id,
-            role,
-            content,
-            platformMessageId
-        ]
-    );
+    // ========================================
+    // INSERT MESSAGE
+    // ========================================
 
+    const result =
+        await run(
+            `
+            INSERT INTO messages (
+                conversation_id,
+                role,
+                content,
+                platform_message_id
+            )
+
+            VALUES (?, ?, ?, ?)
+            `,
+            [
+                conversation.id,
+                role,
+                content,
+                platformMessageId
+            ]
+        );
+
+
+    // ========================================
+    // UPDATE CONVERSATION TIMESTAMP
+    // ========================================
 
     await run(
         `
         UPDATE conversations
-        SET updated_at = CURRENT_TIMESTAMP
+
+        SET updated_at =
+            CURRENT_TIMESTAMP
+
         WHERE id = ?
         `,
-        [conversation.id]
+        [
+            conversation.id
+        ]
     );
 
 
     return {
+        success: true,
+
         duplicate: false,
-        conversation
+
+        messageId:
+            result.id,
+
+        customerId:
+            customer.id,
+
+        conversationId:
+            conversation.id,
+
+        conversationStatus:
+            conversation.status
     };
 }
 
 
 // ========================================
-// GET HISTORY
+// GET AI CONVERSATION HISTORY
 // ========================================
 
 async function getConversation(
     businessId,
     platform,
-    platformCustomerId,
-    limit = 20
+    platformCustomerId
 ) {
 
-    const {
-        conversation
-    } =
-        await getOrCreateConversation(
+    const customer =
+        await getOrCreateCustomer(
             businessId,
             platform,
             platformCustomerId
         );
 
 
-    const rows =
-        await all(
+    // ========================================
+    // AI SHOULD ONLY USE ACTIVE CONVERSATION
+    //
+    // Handoff conversations belong to the
+    // human agent and should not be processed
+    // by the AI.
+    // ========================================
+
+    const conversation =
+        await get(
             `
-            SELECT role, content
-            FROM (
-                SELECT
-                    id,
-                    role,
-                    content
-                FROM messages
-                WHERE conversation_id = ?
-                ORDER BY id DESC
-                LIMIT ?
-            )
-            ORDER BY id ASC
+            SELECT *
+            FROM conversations
+
+            WHERE business_id = ?
+              AND customer_id = ?
+              AND platform = ?
+              AND status = 'active'
+
+            ORDER BY id DESC
+
+            LIMIT 1
             `,
             [
-                conversation.id,
-                limit
+                businessId,
+                customer.id,
+                platform
             ]
         );
 
 
-    return rows.map(
-        row => ({
-            role: row.role,
-            content: row.content
-        })
-    );
+    if (!conversation) {
+        return [];
+    }
+
+
+    const messages =
+        await all(
+            `
+            SELECT
+                role,
+                content
+
+            FROM messages
+
+            WHERE conversation_id = ?
+
+            ORDER BY id ASC
+            `,
+            [
+                conversation.id
+            ]
+        );
+
+
+    // ========================================
+    // CONVERT INTERNAL ROLES FOR OPENAI
+    // ========================================
+
+    return messages
+        .filter(
+            message =>
+                message.role === "user" ||
+                message.role === "assistant"
+        )
+        .map(
+            message => ({
+                role:
+                    message.role,
+
+                content:
+                    message.content
+            })
+        );
 }
 
 
 // ========================================
-// COMPLETE CONVERSATION
+// COMPLETE ACTIVE CONVERSATION
 // ========================================
 
 async function completeConversation(
@@ -390,11 +550,13 @@ async function completeConversation(
     const customer =
         await get(
             `
-            SELECT id
+            SELECT *
             FROM customers
+
             WHERE business_id = ?
               AND platform = ?
               AND platform_customer_id = ?
+
             LIMIT 1
             `,
             [
@@ -407,13 +569,10 @@ async function completeConversation(
 
     if (!customer) {
 
-        console.warn(
-            "⚠️ Cannot complete conversation: customer not found"
-        );
-
         return {
             success: false,
-            reason: "customer_not_found"
+            reason:
+                "customer_not_found"
         };
     }
 
@@ -421,13 +580,16 @@ async function completeConversation(
     const conversation =
         await get(
             `
-            SELECT id
+            SELECT *
             FROM conversations
+
             WHERE business_id = ?
               AND customer_id = ?
               AND platform = ?
               AND status = 'active'
+
             ORDER BY id DESC
+
             LIMIT 1
             `,
             [
@@ -440,13 +602,10 @@ async function completeConversation(
 
     if (!conversation) {
 
-        console.warn(
-            "⚠️ No active conversation to complete"
-        );
-
         return {
             success: false,
-            reason: "conversation_not_found"
+            reason:
+                "active_conversation_not_found"
         };
     }
 
@@ -454,9 +613,11 @@ async function completeConversation(
     await run(
         `
         UPDATE conversations
+
         SET
             status = 'completed',
             updated_at = CURRENT_TIMESTAMP
+
         WHERE id = ?
         `,
         [
@@ -465,16 +626,18 @@ async function completeConversation(
     );
 
 
-    console.log(
-        `✅ Conversation completed: ${conversation.id}`
-    );
-
-
     return {
         success: true,
-        conversationId: conversation.id
+        conversationId:
+            conversation.id
     };
 }
+
+
+// ========================================
+// EXPORTS
+// ========================================
+
 module.exports = {
     getOrCreateCustomer,
     getOrCreateConversation,
