@@ -274,27 +274,24 @@ Lead capture enabled:
 ${leadCaptureEnabled}
 
 Required customer fields:
-${
-    requiredLeadFields.length
-        ? requiredLeadFields.join(", ")
-        : "None"
-}
+${requiredLeadFields.length
+            ? requiredLeadFields.join(", ")
+            : "None"
+        }
 
 Ask one field at a time:
 ${askOneAtATime ? "Yes" : "No"}
 
 Business lead instructions:
-${
-    leadConfig.instructions ||
-    "Follow the business configuration when capturing leads."
-}
+${leadConfig.instructions ||
+        "Follow the business configuration when capturing leads."
+        }
 
 Useful lead metadata:
-${
-    metadataFields.length
-        ? metadataFields.join(", ")
-        : "None"
-}
+${metadataFields.length
+            ? metadataFields.join(", ")
+            : "None"
+        }
 
 If lead capture is enabled:
 
@@ -305,9 +302,8 @@ If lead capture is enabled:
 - Never invent customer information.
 - Do not ask for information already provided in the current conversation.
 
-${
-    askOneAtATime
-        ? `
+${askOneAtATime
+            ? `
 IMPORTANT LEAD COLLECTION RULE:
 
 Ask for only ONE missing customer field per message.
@@ -316,15 +312,46 @@ Never ask for multiple missing customer fields in the same message.
 
 Collect the required fields naturally in the order listed above.
 `
-        : `
+            : `
 You may request multiple missing lead fields when appropriate.
 `
-}
+        }
 
-Once all required customer information has been collected,
-call save_lead.
+LEAD SAVE REQUIREMENT:
+
+Once the customer has shown clear intent to proceed and ALL
+configured required customer fields have been collected,
+you MUST call save_lead immediately.
+
+At that point, do NOT return a normal assistant response before
+calling save_lead.
+
+Do NOT merely say that a team member will assist the customer.
+Do NOT request human handoff simply because the lead information
+is complete.
+
+If the customer's latest message provides the final missing
+required field, call save_lead in that same turn.
+
+Use information already present anywhere in the current
+conversation when constructing the save_lead arguments.
 
 When calling save_lead:
+
+- Include every configured required field that the customer
+  has provided in the conversation.
+- Include a concise factual summary of what the customer wants.
+- Preserve useful known information in metadata.
+- Prefer the configured metadata fields listed above.
+- Never invent metadata values.
+- Only include information learned from the conversation
+  or returned by business tools.
+
+After save_lead succeeds:
+
+- Confirm naturally that the customer's information was received.
+- Do not mention the database, lead ID, function, tool,
+  metadata, or internal systems.
 
 - Include a concise factual summary of what the customer wants.
 - Preserve useful known information in metadata.
@@ -351,10 +378,9 @@ Human handoff enabled:
 ${humanHandoffEnabled}
 
 Business handoff instructions:
-${
-    handoffConfig.instructions ||
-    "Use human handoff when genuine human assistance is required."
-}
+${handoffConfig.instructions ||
+        "Use human handoff when genuine human assistance is required."
+        }
 
 If human handoff is enabled, request human assistance when:
 
@@ -479,10 +505,9 @@ natural, and conversational.
                     "save_lead",
 
                 description:
-                    `Save a qualified lead after the customer shows clear intent to proceed and the required customer information has been collected. Required fields: ${
-                        requiredLeadFields.length
-                            ? requiredLeadFields.join(", ")
-                            : "none"
+                    `MANDATORY when lead capture is enabled and the customer has shown clear intent to proceed and all required customer fields have been collected. Call this tool immediately when the final required field becomes available instead of returning a normal assistant response. Required fields: ${requiredLeadFields.length
+                        ? requiredLeadFields.join(", ")
+                        : "none"
                     }.`,
 
                 parameters: {
@@ -523,18 +548,17 @@ natural, and conversational.
                             type: "object",
 
                             description:
-                                `Relevant business-specific information about the lead. Preferred fields: ${
-                                    metadataFields.length
-                                        ? metadataFields.join(", ")
-                                        : "none"
+                                `Relevant business-specific information about the lead. Preferred fields: ${metadataFields.length
+                                    ? metadataFields.join(", ")
+                                    : "none"
                                 }.`,
 
                             additionalProperties:
                                 true
                         }
                     },
-
                     required: [
+                        ...requiredLeadFields,
                         "summary"
                     ]
                 }
