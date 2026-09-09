@@ -377,7 +377,15 @@ async function addMessage(
             platformCustomerId
         );
 
-
+console.log(
+    "💾 addMessage target conversation:",
+    {
+        conversationId: conversation.id,
+        status: conversation.status,
+        role,
+        content
+    }
+);
     // ========================================
     // INSERT MESSAGE
     // ========================================
